@@ -16,16 +16,16 @@ from Particles](https://www.cs.ubc.ca/~rbridson/docs/brentw_msc.pdf)
 + [A Practical Model for Subsurface Light Transport](https://graphics.stanford.edu/papers/bssrdf/bssrdf.pdf)
 
 ## Resources
-We decide to implement the project in C++ basing on code from assignment 3.
+We decide to implement the project in C++ based on code from assignment 3.
 
 ## Goals
 ### Baseline plan
-+ Display the geometry of result from fluid simulation in edit mode.
++ Display the geometry of result by fluid simulation in edit mode.
 + Render an image of fluid moving in the Cornell box.
 + Render an image of fluid with reflected light showing the subsurface structure.
 
 ### Aspirational plan
-+ High quality ray tracing with fluid will take a long time. If time permits, we want to use advanced algorithms to speed up rendering, or investigate photon mapping to get better result.
++ High quality ray tracing with fluid will take a long time. If time permits, we want to implement advanced algorithms to speed up rendering, or investigate photon mapping to get better rendering result.
 
 ## Schedule
 + 1 week: 

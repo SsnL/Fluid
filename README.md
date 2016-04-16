@@ -28,7 +28,7 @@ We decide to implement the project in C++, and use assignment 3 as starting code
 + High quality ray tracing with fluid will take a long time. If time permits, we want to implement advanced algorithms to speed up rendering, or investigate photon mapping to get better rendering result.
 
 ## Schedule
-+ 1 week: 
++ 0.5 week: 
 	+ Implement fluid simulation, investigate ways to specify a fluid model to renderer. 
 	+ Achieve baseline plan #1.
 + 0.5 week: 

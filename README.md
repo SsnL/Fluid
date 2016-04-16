@@ -16,11 +16,11 @@ from Particles](https://www.cs.ubc.ca/~rbridson/docs/brentw_msc.pdf)
 + [A Practical Model for Subsurface Light Transport](https://graphics.stanford.edu/papers/bssrdf/bssrdf.pdf)
 
 ## Resources
-We decide to implement the project in C++ based on code from assignment 3.
+We decide to implement the project in C++, and use assignment 3 as starting code.
 
 ## Goals
 ### Baseline plan
-+ Display the geometry of result by fluid simulation in edit mode.
++ Display the geometry of result from fluid simulation in edit mode.
 + Render an image of fluid moving in the Cornell box.
 + Render an image of fluid with reflected light showing the subsurface structure.
 

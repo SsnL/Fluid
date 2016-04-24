@@ -22,14 +22,6 @@ class Particle : public StaticScene::Sphere {
 
   bool collide(Particle *other);
 
- private:
-
-  const StaticScene::SphereObject* object; ///< pointer to the particle object; inherited from sphere
-
-  Vector3D o; ///< origin of the particle
-  double r;   ///< radius
-  double r2;  ///< radius squared
-
 };
 
 struct Force {

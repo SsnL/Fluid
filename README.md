@@ -9,7 +9,11 @@ In this project, we want to support fluid simulation and display the simulated r
 + Huirong Zhu
 
 ## Background
+### Challenges
++ Fluid simulation is widely used by artists and producers in providing amazing visual effects. It's also used in engineering area in studying fluid dynamics.
++ However, fluid movement follows complicated physical model and thus requires a huge amount of computation power to simulate. Furthermore, we want to make the rendering of fluid more realistic by applying the subsurface scattering model. Thus, efficient simulation and rendering become critical in our project.
 
+### Papers
 + [Position Based Fluids](http://mmacklin.com/pbf_sig_preprint.pdf)
 + [Fluid Surface Reconstruction
 from Particles](https://www.cs.ubc.ca/~rbridson/docs/brentw_msc.pdf)
@@ -20,7 +24,7 @@ We decide to implement the project in C++, and use assignment 3 as starting code
 
 ## Goals
 ### Baseline plan
-+ Display the geometry of result from fluid simulation in edit mode.
++ Display the geometry of results from fluid simulation in edit mode.
 + Render an image of fluid moving in the Cornell box.
 + Render an image of fluid with reflected light showing the subsurface structure.
 
@@ -28,7 +32,7 @@ We decide to implement the project in C++, and use assignment 3 as starting code
 + High quality ray tracing with fluid will take a long time. If time permits, we want to implement advanced algorithms to speed up rendering, or investigate photon mapping to get better rendering result.
 
 ## Schedule
-+ 1 week: 
++ 0.5 week: 
 	+ Implement fluid simulation, investigate ways to specify a fluid model to renderer. 
 	+ Achieve baseline plan #1.
 + 0.5 week: 

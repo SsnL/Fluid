@@ -1,3 +1,6 @@
+#ifndef CGL_PARTICLES_H
+#define CGL_PARTICLES_H
+
 #include <utility>
 #include <algorithm>
 
@@ -47,3 +50,5 @@ struct Particles {
 }
 
 // pt->time, pt->particles
+
+#endif // CGL_PARTICLES_H

@@ -20,7 +20,7 @@ class Particle : public StaticScene::Sphere {
 
   Particle(const StaticScene::SphereObject* object, const Vector3D& v, const Vector3D& pos, const double r,
     const double rd) : StaticScene::Sphere(object, pos, r), velocity(v), rest_density(rd) {
-    mass = 4.0 / 3 * PI * r * r * r * rest_density;
+    mass = 4.0 / 3 * PI * intpow<3>(r) * rest_density;
   }
 
   bool collide(Particle *other);

@@ -46,6 +46,16 @@ inline double sin_phi(const Vector3D& w) {
   return clamp(w.y / sinTheta, -1.0, 1.0);
 }
 
+template <unsigned int exponent>
+inline double intpow(double base) {
+  return intpow<exponent-1>(base) * base;
+}
+
+template <>
+inline double intpow<0>(double base) {
+  return 1;
+}
+
 void make_coord_space(Matrix3x3& o2w, const Vector3D& n);
 
 /**

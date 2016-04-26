@@ -33,7 +33,7 @@ struct Force {
 
 struct Gravity : Force {
   Vector3D getAccerlation(double t, Particle &p) {
-    return Vector3D(0, 0, -9.8 * p.mass);
+    return Vector3D(0, 0, -9.8);
   }
 };
 
@@ -42,9 +42,8 @@ struct Particles {
   std::vector<Force *> fs;
   PathTracer* pt;
 
-  void simulateToTime(double t) {
-    //
-  };
+  // return True iff t > current time.
+  bool simulateToTime(double t);
 };
 
 }

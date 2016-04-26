@@ -8,6 +8,7 @@
 #include "image.h"
 
 #include <iostream>
+typedef uint32_t gid_t;
 #include <unistd.h>
 
 using namespace std;
@@ -30,9 +31,9 @@ void usage(const char* binaryName) {
 }
 
 HDRImageBuffer* load_exr(const char* file_path) {
-  
+
   const char* err;
-  
+
   EXRImage exr;
   InitEXRImage(&exr);
 
@@ -60,8 +61,8 @@ HDRImageBuffer* load_exr(const char* file_path) {
   float* channel_g = (float*) exr.images[1];
   float* channel_b = (float*) exr.images[0];
   for (size_t i = 0; i < exr.width * exr.height; i++) {
-    envmap->data[i] = Spectrum(channel_r[i], 
-                               channel_g[i], 
+    envmap->data[i] = Spectrum(channel_r[i],
+                               channel_g[i],
                                channel_b[i]);
   }
 
@@ -148,7 +149,7 @@ int main( int argc, char** argv ) {
   // init viewer
   viewer.init();
 
-  // load scene 
+  // load scene
   app->load(sceneInfo);
 
   delete sceneInfo;

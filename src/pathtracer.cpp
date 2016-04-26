@@ -38,6 +38,7 @@ PathTracer::PathTracer(size_t ns_aa,
   this->ns_diff = ns_diff;
   this->ns_glsy = ns_diff;
   this->ns_refr = ns_refr;
+  this->simulate_time = 0.0f;
 
   if (envmap) {
     this->envLight = new EnvironmentLight(envmap);
@@ -247,7 +248,7 @@ void PathTracer::build_accel() {
   fprintf(stdout, "Done! (%.4f sec)\n", timer.duration());
 
   // build BVH //
-  fprintf(stdout, "[PathTracer] Building BVH from %lu primitives... ", primitives.size()); 
+  fprintf(stdout, "[PathTracer] Building BVH from %lu primitives... ", primitives.size());
   fflush(stdout);
   timer.start();
   bvh = new BVHAccel(primitives);
@@ -484,13 +485,13 @@ Spectrum PathTracer::trace_ray(const Ray &r, bool includeLe) {
   Intersection isect;
   Spectrum L_out;
 
-  // You will extend this in part 2. 
+  // You will extend this in part 2.
   // If no intersection occurs, we simply return black.
   // This changes if you implement hemispherical lighting for extra credit.
-  if (!bvh->intersect(r, &isect)) 
+  if (!bvh->intersect(r, &isect))
     return L_out;
 
-  // This line returns a color depending only on the normal vector 
+  // This line returns a color depending only on the normal vector
   // to the surface at the intersection point.
   // Remove it when you are ready to begin Part 3.
   // return normal_shading(isect.n);
@@ -500,11 +501,11 @@ Spectrum PathTracer::trace_ray(const Ray &r, bool includeLe) {
   if (includeLe)
     L_out += isect.bsdf->get_emission();
 
-  // You will implement this in part 3. 
+  // You will implement this in part 3.
   // Delta BSDFs have no direct lighting since they are zero with probability 1 --
-  // their values get accumulated through indirect lighting, where the BSDF 
+  // their values get accumulated through indirect lighting, where the BSDF
   // gets to sample itself.
-  if (!isect.bsdf->is_delta()) 
+  if (!isect.bsdf->is_delta())
     L_out += estimate_direct_lighting(r, isect);
 
   // You will implement this in part 4.
@@ -520,8 +521,8 @@ Spectrum PathTracer::trace_ray(const Ray &r, bool includeLe) {
 Spectrum PathTracer::raytrace_pixel(size_t x, size_t y) {
 
   // Part 1, Task 1:
-  // Make a loop that generates num_samples camera rays and traces them 
-  // through the scene. Return the average Spectrum. 
+  // Make a loop that generates num_samples camera rays and traces them
+  // through the scene. Return the average Spectrum.
 
   int num_samples = ns_aa; // total samples to evaluate
   Vector2D origin = Vector2D(x,y); // bottom left corner of the pixel
@@ -578,7 +579,7 @@ void PathTracer::worker_thread() {
   WorkItem work;
   while (continueRaytracing && workQueue.try_get_work(&work)) {
     raytrace_tile(work.tile_x, work.tile_y, work.tile_w, work.tile_h);
-    { 
+    {
       lock_guard<std::mutex> lk(m_done);
       ++tilesDone;
       cout << "\r[PathTracer] Rendering... " << int((double)tilesDone/tilesTotal * 100) << '%';
@@ -616,9 +617,9 @@ void PathTracer::save_image(string filename) {
     time_t t = time(nullptr);
     tm *lt = localtime(&t);
     stringstream ss;
-    ss << "screenshot_" << lt->tm_mon+1 << "-" << lt->tm_mday << "_" 
+    ss << "screenshot_" << lt->tm_mon+1 << "-" << lt->tm_mday << "_"
       << lt->tm_hour << "-" << lt->tm_min << "-" << lt->tm_sec << ".png";
-    filename = ss.str();  
+    filename = ss.str();
   }
 
 

@@ -11,6 +11,21 @@ namespace CGL {
         neighbors.push_back(p);
       }
     }
+    if (neighbors.size() < particles->p_num_neighbor_alert_thresh) {
+      cerr << "Particle" << origin()
+        << " only has " << neighbors.size()
+        << " neighbors." << endl;
+    }
+  }
+
+  void Particle::applyForces(double delta_t) {
+    for (Force *f : particles->fs) {
+      velocity += delta_t * f->getAccerlation(particles->simulate_time, *this);
+    }
+  }
+
+  void Particle::applyVelocity(double delta_t) {
+    origin() += delta_t * velocity;
   }
 
   bool Particles::simulateToTime(double t) {

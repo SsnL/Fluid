@@ -1,5 +1,0 @@
-/Users/S_sn/184/Project/Fluid/build/src/CMakeFiles/pathtracer.dir
-/Users/S_sn/184/Project/Fluid/build/CGL/deps/glfw/CMakeFiles/uninstall.dir
-/Users/S_sn/184/Project/Fluid/build/CGL/deps/glfw/src/CMakeFiles/glfw.dir
-/Users/S_sn/184/Project/Fluid/build/CGL/src/CMakeFiles/CGL.dir
-/Users/S_sn/184/Project/Fluid/build/CGL/deps/glew/CMakeFiles/glew.dir

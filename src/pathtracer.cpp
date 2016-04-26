@@ -38,7 +38,7 @@ PathTracer::PathTracer(size_t ns_aa,
   this->ns_diff = ns_diff;
   this->ns_glsy = ns_diff;
   this->ns_refr = ns_refr;
-  this->simulate_time = 0.0f;
+  this->fluid_particles = NULL; // TODO: this should be set in PathTracer::build_accel
 
   if (envmap) {
     this->envLight = new EnvironmentLight(envmap);

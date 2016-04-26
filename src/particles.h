@@ -40,7 +40,9 @@ struct Gravity : Force {
 struct Particles {
   std::vector<Particle *> ps;
   std::vector<Force *> fs;
-  PathTracer* pt;
+  double simulate_time;
+
+  Particles() : simulate_time(0.0) {};
 
   // return True iff t > current time.
   bool simulateToTime(double t);

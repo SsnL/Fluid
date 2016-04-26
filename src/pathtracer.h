@@ -17,6 +17,7 @@
 #include "image.h"
 #include "work_queue.h"
 #include "intersection.h"
+#include "particles.h"
 
 #include "static_scene/scene.h"
 using CGL::StaticScene::Scene;
@@ -260,8 +261,7 @@ class PathTracer {
   bool show_rays;                         ///< show rays from raylog
 
   // Fluid simulation //
-
-  double simulate_time;
+  Particles *fluid_particles;
 
 };
 

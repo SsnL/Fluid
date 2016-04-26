@@ -34,6 +34,7 @@ set(APPLICATION_SOURCE
     camera.cpp
     sampler.cpp
     pathtracer.cpp
+    particles.cpp
 
     # misc
     misc/sphere_drawing.cpp

@@ -55,8 +55,8 @@ class Sphere : public Primitive {
 
   /**
    * Get BSDF.
-   * In the case of a sphere, the surface material BSDF is stored in 
-   * its sphere object wrapper. 
+   * In the case of a sphere, the surface material BSDF is stored in
+   * its sphere object wrapper.
    */
   BSDF* get_bsdf() const { return object->get_bsdf(); }
 
@@ -81,6 +81,11 @@ class Sphere : public Primitive {
   * Draw outline with OpenGL (for visualizer)
   */
   void drawOutline(const Color& c) const;
+
+  /* Needed for Particle subclass. */
+  Vector3D origin() const {
+    return this->o;
+  }
 
  private:
 

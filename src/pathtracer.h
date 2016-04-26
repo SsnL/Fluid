@@ -262,7 +262,6 @@ class PathTracer {
 
   // Fluid simulation //
   Particles *fluid_particles;
-
 };
 
 }  // namespace CGL

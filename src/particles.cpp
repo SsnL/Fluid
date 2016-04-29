@@ -157,7 +157,7 @@ namespace CGL {
   }
 
   void Particles::redraw(const Color& c) {
-    simulateToTime(simulate_time + default_delta_t);
+    simulateToTime(simulate_time + DEFAULT_DELTA_T);
     for (Particle *p : ps) {
       Misc::draw_sphere_opengl(p->origin(), p->radius(), c);
     }

@@ -36,6 +36,7 @@ PathTracer::PathTracer(size_t ns_aa,
   this->ns_diff = ns_diff;
   this->ns_glsy = ns_diff;
   this->ns_refr = ns_refr;
+  this->fluid_particles = NULL; // TODO: this should be set in PathTracer::build_accel
 
   if (envmap) {
     this->envLight = new EnvironmentLight(envmap);
@@ -249,6 +250,7 @@ void PathTracer::build_accel() {
   fflush(stdout);
   timer.start();
   bvh = new BVHAccel(primitives);
+  fluid_particles = new Particles(bvh);
   timer.stop();
   fprintf(stdout, "Done! (%.4f sec)\n", timer.duration());
 

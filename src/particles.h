@@ -118,12 +118,12 @@ struct Particles {
   double simulate_time;
 
   // TODO: Also set PS, FS, and BVH
-  Particles(BVHAccel *bvh) : bvh(bvh), simulate_time(0.0) {
+  Particles() : bvh(NULL), simulate_time(0.0) {
     ps.push_back(new Particle(
-      new StaticScene::SphereObject(Vector3D(10, 10, 10), 10.0f, new DiffuseBSDF(Spectrum(0.5f,0.5f,0.5f))),
+      new StaticScene::SphereObject(Vector3D(10, 10, 10), 1.0f, new DiffuseBSDF(Spectrum(0.5f,0.5f,0.5f))),
       Vector3D(0, 0, 2),
       Vector3D(10, 10, 10),
-      10.0f,
+      1.0f,
       1.0f
     ));
   };

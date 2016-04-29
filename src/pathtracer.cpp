@@ -37,6 +37,7 @@ PathTracer::PathTracer(size_t ns_aa,
   this->ns_glsy = ns_diff;
   this->ns_refr = ns_refr;
   this->fluid_particles = NULL; // TODO: this should be set in PathTracer::build_accel
+  this->fluid_particles = new Particles();
 
   if (envmap) {
     this->envLight = new EnvironmentLight(envmap);
@@ -250,7 +251,7 @@ void PathTracer::build_accel() {
   fflush(stdout);
   timer.start();
   bvh = new BVHAccel(primitives);
-  fluid_particles = new Particles(bvh);
+  fluid_particles->bvh = bvh;
   timer.stop();
   fprintf(stdout, "Done! (%.4f sec)\n", timer.duration());
 
@@ -399,7 +400,7 @@ void PathTracer::key_press(int key) {
       break;
   case 'm': case 'M':
       fluid_particles->redraw(Color(.5, .5, .5, .25));
-      fprintf(stdout, "[PathTracer] Fluid particles updated.");
+      fprintf(stdout, "[PathTracer] Fluid particles updated.\n");
       break;
   case 'a':
   case 'A':

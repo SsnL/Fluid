@@ -1,5 +1,6 @@
 #include "particles.h"
 #include "misc/sphere_drawing.h"
+#include "GL/glew.h"
 
 // params
 // artificial pressure denom
@@ -157,10 +158,14 @@ namespace CGL {
   }
 
   void Particles::redraw(const Color& c) {
-    simulateToTime(simulate_time + DEFAULT_DELTA_T);
+    // simulateToTime(simulate_time + DEFAULT_DELTA_T);
+    glPolygonOffset(1.0, 1.0);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    Misc::draw_sphere_opengl(Vector3D(), 1, Color(1,1,1,1));
     for (Particle *p : ps) {
       Misc::draw_sphere_opengl(p->origin(), p->radius(), c);
     }
+    glDisable(GL_POLYGON_OFFSET_FILL);
   }
 
 }  // namespace CGL

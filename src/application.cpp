@@ -8,6 +8,7 @@
 #include "dynamic_scene/spot_light.h"
 #include "dynamic_scene/sphere.h"
 #include "dynamic_scene/mesh.h"
+#include "dynamic_scene/mesh.h"
 
 using Collada::CameraInfo;
 using Collada::LightInfo;
@@ -15,6 +16,7 @@ using Collada::MaterialInfo;
 using Collada::PolymeshInfo;
 using Collada::SceneInfo;
 using Collada::SphereInfo;
+using namespace tinyxml2;
 
 namespace CGL {
 
@@ -214,6 +216,7 @@ void Application::load(SceneInfo* sceneInfo) {
   vector<Collada::Node>& nodes = sceneInfo->nodes;
   vector<DynamicScene::SceneLight *> lights;
   vector<DynamicScene::SceneObject *> objects;
+  
 
   // save camera position to update camera control later
   CameraInfo *c;
@@ -287,6 +290,52 @@ void Application::load(SceneInfo* sceneInfo) {
 
 }
 
+Vector3D Application::stov(string s) {
+  double x,y,z;
+  stringstream ss(s);
+  ss >> x;
+  ss >> y;
+  ss >> z;
+  return Vector3D(x,y,z);
+}
+int Application::load_particles(const char* filename) {
+    std::ifstream ifs (filename, std::ifstream::in);
+  if (!ifs.is_open()) {
+      cout << "not opened";
+    return -1;
+  } ifs.close();
+
+ XMLDocument doc;
+  doc.LoadFile(filename);
+  if (doc.Error()) {
+    cout << "XML error: ";
+    doc.PrintError();
+    exit(EXIT_FAILURE);
+  }
+
+  // Check XML schema
+  XMLElement* root = doc.FirstChildElement("particles");
+  if (!root) {
+    cout << "Error: not a particles file!";
+  } else {
+    cout << "Loading particle file...";
+  }
+
+  XMLElement* ps = root->FirstChildElement("ps");
+  XMLElement* fs = root->FirstChildElement("fs");
+
+  XMLElement* p = ps->FirstChildElement("particle");
+  while (p) {
+      Vector3D pos = stov(p->FirstChildElement("pos")->GetText());
+      Vector3D v =  stov(p->FirstChildElement("v")->GetText());
+      float r = stof(p->FirstChildElement("r")->GetText());
+      cout <<"pos:"<<pos<<" v:"<<v<<" r:"<<r<<endl;
+      particles->ps.push_back(init_particle(pos,v,r));
+      p = p->NextSiblingElement("particle");
+  }
+  return 0;
+}
+
 void Application::init_camera(CameraInfo& cameraInfo,
                               const Matrix4x4& transform) {
   camera.configure(cameraInfo, screenW, screenH);
@@ -332,6 +381,12 @@ DynamicScene::SceneObject *Application::init_sphere(
   const Vector3D& position = (transform * Vector4D(0, 0, 0, 1)).projectTo3D();
   double scale = (transform * Vector4D(1, 0, 0, 0)).to3D().norm();
   return new DynamicScene::Sphere(sphere, position, scale);
+}
+
+Particle *Application::init_particle(
+    Vector3D& pos, Vector3D& v, float r) {
+   Particle* p = new Particle(nullptr, v, pos, r, 1.0);  
+   return p;
 }
 
 DynamicScene::SceneObject *Application::init_polymesh(

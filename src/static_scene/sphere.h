@@ -83,7 +83,7 @@ class Sphere : public Primitive {
   void drawOutline(const Color& c) const;
 
   /* Needed for Particle subclass. */
-  Vector3D origin() const {
+  inline Vector3D &origin() {
     return this->o;
   }
 

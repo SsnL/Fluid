@@ -106,6 +106,8 @@ int main( int argc, char** argv ) {
         break;
     case 'p':
         particle_path = string(optarg);
+        msg(particle_path);
+        break;
     default:
         usage(argv[0]);
         return 1;
@@ -136,6 +138,11 @@ int main( int argc, char** argv ) {
   if (write_to_file) {
     app->init();
     app->load(sceneInfo);
+    // load particles
+    msg(app->load_particles(particle_path.c_str()));
+    msg(app->particles->ps[0]->origin());
+    msg(app->particles->ps[0]->velocity);
+    msg(app->particles->ps[0]->radius());
     delete sceneInfo;
 
     if (w && h)
@@ -157,6 +164,11 @@ int main( int argc, char** argv ) {
   // load scene
   app->load(sceneInfo);
 
+  // load particles
+  msg(app->load_particles(particle_path.c_str()));
+  msg(app->particles->ps[0]->origin());
+  msg(app->particles->ps[0]->velocity);
+  msg(app->particles->ps[0]->radius());
   delete sceneInfo;
 
   // start viewer

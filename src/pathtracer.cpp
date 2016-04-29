@@ -398,6 +398,10 @@ void PathTracer::key_press(int key) {
           selectionHistory.push(current->r);
       }
       break;
+  case 'm': case 'M':
+      fluid_particles->redraw(Color(.5, .5, .5, .25));
+      fprintf(stdout, "[PathTracer] Fluid particles updated.");
+      break;
   case 'a':
   case 'A':
       show_rays = !show_rays;

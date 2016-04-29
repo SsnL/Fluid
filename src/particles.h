@@ -14,14 +14,14 @@ struct Particles;
 
 /* Keep the subclass in CGL::StaticScene as a good practice. */
 namespace StaticScene {
-  class Particle : public StaticScene::Sphere {
+  class Particle : public Sphere {
    public:
     Vector3D velocity;
     const double rest_density;
     const double mass;
 
     Particle(
-      const StaticScene::SphereObject* object,
+      const SphereObject* object,
       const Vector3D& v,
       const Vector3D& pos,
       const double r,
@@ -72,6 +72,7 @@ struct Particles {
   // return True iff t > current time.
   bool simulateToTime(double t);
   void timeStep(double delta_t);
+  void redraw(const Color& c);
 };
 
 } // namespace CGL

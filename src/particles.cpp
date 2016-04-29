@@ -1,4 +1,5 @@
 #include "particles.h"
+#include "misc/sphere_drawing.h"
 
 using namespace CGL::StaticScene;
 
@@ -28,6 +29,13 @@ namespace CGL {
 
   void Particles::timeStep(double delta_t) {
     simulate_time += delta_t;
+  }
+
+  void Particles::redraw(const Color& c) {
+    simulateToTime(simulate_time + default_delta_t);
+    for (Particle *p : ps) {
+      Misc::draw_sphere_opengl(p->origin(), p->radius(), c);
+    }
   }
 
 }  // namespace CGL

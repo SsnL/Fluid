@@ -6,15 +6,31 @@
 
 #include "CGL/CGL.h"
 #include "static_scene/sphere.h"
+#include "bvh.h"
+
+// params
+// used in SPH density estimation
+#define H 2
+
+using namespace CGL::StaticScene;
 
 namespace CGL {
 
-inline double poly6_kernel(Vector3D r, double h) {
-  return (315 / (64 * PI * intpow<9>(h))) * intpow<3>(intpow<2>(h) - r.norm2());
+inline double poly6_kernel(Vector3D r) {
+  double r_l = r.norm();
+  if (r_l > H) {
+    return 0.0;
+  }
+  double temp = intpow<2>(H) - intpow<2>(r_l);
+  return (315 * intpow<3>(temp)) / (64 * PI * intpow<9>(H));
 }
 
-inline Vector3D grad_spiky_kernel(Vector3D r, double h) {
-  return (45 / (PI * intpow<6>(h))) * intpow<2>(h - r.norm()) * r.unit();
+inline Vector3D grad_spiky_kernel(Vector3D r) {
+  double r_l = r.norm();
+  if (r_l > H || r_l == 0.0) {
+    return Vector3D();
+  }
+  return (45 * intpow<2>(H - r_l) * r) / (PI * intpow<6>(H) * r_l);
 }
 
 /* Allow use in CGL::StaticScene::Particle. */
@@ -26,42 +42,64 @@ namespace StaticScene {
    public:
     Vector3D velocity;
     const double rest_density;
-    const double mass;
+    // const double mass;
+    Vector3D new_origin;
+    std::vector<Particle *> neighbors; // changing during simulation
+    // Vector3D vorticity;
+
+    static double tensile_instability_scale;
 
     Particle(
       const StaticScene::SphereObject* object,
       const Vector3D& v,
       const Vector3D& pos,
       const double r,
-      const double rest_density,
-      const Particles *particles
+      const double rest_density
     ) :
       StaticScene::Sphere(object, pos, r),
       velocity(v),
-      rest_density(rest_density),
-      particles(particles),
-      mass(4.0 / 3 * PI * intpow<3>(r) * rest_density) { }
+      rest_density(rest_density) { }
 
-    bool collide(Particle *other);
+    double getLatestDensityEstimate() {
+      return density;
+    }
 
-    void findNeighbors();
+    void initializeWithNewNeighbors();
 
-    void applyForces(double delta_t);
-    void applyVelocity(double delta_t);
-    void calculateLambda();
-    void esitmateDensity();
+    // naive force and velocity
+    void applyForceVelocity(double delta_t);
+
+    // Newton step density constraint
+    void newtonStepCalculateLambda();
+    void newtonStepUpdatePosition(BVHAccel *bvh);
+
+    // update velocity basing on new position
+    // positions is unchanged
+    void updateVelocity(double delta_t);
+
+    // calculate vorticity and apply XSPH viscosity
+    void calculateVorticityApplyXSPHViscosity();
+
+    // apply vorticity confinement
+    void applyVorticity(double delta_t);
+
+    // update position to
+    void updatePosition();
 
    private:
-    const Particles *particles;
+    // const Particles *particles;
+    // SPH estimate, changing during simulation
+    double density;
     double lambda; // changing during simulation
-    double density; // changing during simulation
-    std::vector<Particle *> neighbors; // changing during simulation
+    Vector3D vorticity; // changing during simulation
+    std::vector<double> s_corr; // changing during simulation, same order as neighbors
+    std::vector<Vector3D> grad_w_neighbors; // changing during simulation, same order as neighbors
   };
 
 } // namespace StaticScene
 
 /* The above defined class. */
-using CGL::StaticScene::Particle;
+// using CGL::StaticScene::Particle;
 
 struct Force {
   virtual Vector3D getAccerlation(double t, Particle &p);
@@ -75,17 +113,11 @@ struct Gravity : Force {
 
 struct Particles {
   std::vector<Particle *> ps;
-  std::vector<Force *> fs;
+  // std::vector<Force *> fs;
+  BVHAccel* bvh;
   double simulate_time;
 
-  // params
-  double default_delta_t = 0.001;
-  double sq_neighbor_radius = 4;
-  // should be 30~40 for SPH density est to be stable
-  double p_num_neighbor_alert_thresh = 18;
-  // used in calculating lambda
-  double epsilon = 0.1;
-
+  // TODO: Also set PS, FS, and BVH
   Particles() : simulate_time(0.0) {};
 
   // return True iff t > current time.
@@ -94,5 +126,7 @@ struct Particles {
 };
 
 } // namespace CGL
+
+#undef H
 
 #endif // CGL_PARTICLES_H

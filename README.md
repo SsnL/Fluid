@@ -15,6 +15,7 @@ In this project, we want to support fluid simulation and display the simulated r
 
 ### Papers
 + [Position Based Fluids](http://mmacklin.com/pbf_sig_preprint.pdf)
++ [Position Based Fluids [slides]](http://mmacklin.com/pbf_slides.pdf)
 + [Fluid Surface Reconstruction
 from Particles](https://www.cs.ubc.ca/~rbridson/docs/brentw_msc.pdf)
 

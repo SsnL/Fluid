@@ -88,7 +88,7 @@ class Sphere : public Primitive {
   }
 
   /* Needed for Particle subclass. */
-  double radius() const {
+  inline double &radius() {
     return this->r;
   }
 

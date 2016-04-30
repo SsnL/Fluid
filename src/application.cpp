@@ -298,17 +298,19 @@ Vector3D Application::stov(string s) {
   ss >> z;
   return Vector3D(x,y,z);
 }
-int Application::load_particles(const char* filename) {
+void Application::load_particles(const char* filename) {
     std::ifstream ifs (filename, std::ifstream::in);
   if (!ifs.is_open()) {
-      cout << "not opened";
-    return -1;
+    cout << "[Warning] Particle file not passes in or not found\n";
+    cout << "[Warning] use -p <particle_file_path>\n";
+    pathtracer->fluid_particles = new Particles();
+    return;
   } ifs.close();
 
  XMLDocument doc;
   doc.LoadFile(filename);
   if (doc.Error()) {
-    cout << "XML error: ";
+    cout << "[ERROR] XML error";
     doc.PrintError();
     exit(EXIT_FAILURE);
   }
@@ -316,7 +318,7 @@ int Application::load_particles(const char* filename) {
   // Check XML schema
   XMLElement* root = doc.FirstChildElement("particles");
   if (!root) {
-    cout << "Error: not a particles file!";
+    cout << "[ERROR] Not a particles file!";
   } else {
     cout << "Loading particle file...";
   }
@@ -334,7 +336,6 @@ int Application::load_particles(const char* filename) {
       p = p->NextSiblingElement("particle");
   }
   pathtracer->fluid_particles = particles;
-  return 0;
 }
 
 void Application::init_camera(CameraInfo& cameraInfo,

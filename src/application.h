@@ -91,7 +91,7 @@ class Application : public Renderer {
 
   void load(Collada::SceneInfo* sceneInfo);
   Vector3D stov(std::string s);
-  int load_particles(const char* filename);
+  void load_particles(const char* filename);
   void render_to_file(std::string filename) { 
     set_up_pathtracer();
     pathtracer->render_to_file(filename); 

@@ -19,6 +19,7 @@ using namespace CGL;
 void usage(const char* binaryName) {
   printf("Usage: %s [options] <scenefile>\n", binaryName);
   printf("Program Options:\n");
+  printf("  -p  <PATH>       Path to particle definition");
   printf("  -s  <INT>        Number of camera rays per pixel\n");
   printf("  -l  <INT>        Number of samples per area light\n");
   printf("  -t  <INT>        Number of render threads\n");
@@ -26,7 +27,6 @@ void usage(const char* binaryName) {
   printf("  -e  <PATH>       Path to environment map\n");
   printf("  -f  <FILENAME>   Image (.png) file to save output to in windowless mode\n");
   printf("  -r  <INT> <INT>  Width and height of output image (if windowless)\n");
-  printf("  -p <PATH>        Path to particle definition");
   printf("  -h               Print this help message\n");
   printf("\n");
 }
@@ -139,10 +139,7 @@ int main( int argc, char** argv ) {
     app->init();
     app->load(sceneInfo);
     // load particles
-    msg(app->load_particles(particle_path.c_str()));
-    msg(app->particles->ps[0]->origin());
-    msg(app->particles->ps[0]->velocity);
-    msg(app->particles->ps[0]->radius());
+    app->load_particles(particle_path.c_str());
     delete sceneInfo;
 
     if (w && h)
@@ -165,10 +162,10 @@ int main( int argc, char** argv ) {
   app->load(sceneInfo);
 
   // load particles
-  msg(app->load_particles(particle_path.c_str()));
-  msg(app->particles->ps[0]->origin());
-  msg(app->particles->ps[0]->velocity);
-  msg(app->particles->ps[0]->radius());
+  app->load_particles(particle_path.c_str());
+  // msg(app->particles->ps[0]->origin());
+  // msg(app->particles->ps[0]->velocity);
+  // msg(app->particles->ps[0]->radius());
   delete sceneInfo;
 
   // start viewer

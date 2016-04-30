@@ -59,6 +59,24 @@ struct Ray {
     sign[2] = (inv_d.z < 0);
   }
 
+  /**
+   * Constructor.
+   * Create a ray instance with given origin and direction.
+   * \param o origin of the ray
+   * \param d direction of the ray
+   * \param min_t min t value for the ray (if it's actually a segment)
+   * \param max_t max t value for the ray (if it's actually a segment)
+   * \param depth depth of the ray
+   */
+    Ray(const Vector3D& o, const Vector3D& d,
+      double min_t, double max_t, int depth = 0
+    ) : o(o), d(d), min_t(min_t), max_t(max_t), depth(depth) {
+    inv_d = Vector3D(1 / d.x, 1 / d.y, 1 / d.z);
+    sign[0] = (inv_d.x < 0);
+    sign[1] = (inv_d.y < 0);
+    sign[2] = (inv_d.z < 0);
+  }
+
 
   /**
    * Returns the point t * |d| along the ray.

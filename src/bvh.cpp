@@ -19,6 +19,7 @@ BVHAccel::BVHAccel(const std::vector<Primitive *> &_primitives,
 
 BVHAccel::~BVHAccel() {
   if (root) delete root;
+  if (prims) delete prims;
 }
 
 BBox BVHAccel::get_bbox() const {
@@ -27,8 +28,8 @@ BBox BVHAccel::get_bbox() const {
 
 void BVHAccel::draw(BVHNode *node, const Color& c) const {
   if (node->isLeaf()) {
-    for (Primitive *p : *(node->prims))
-      p->draw(c);
+    for (size_t i = node->l_ind; i < node->r_ind; i++)
+      prims->at(i)->draw(c);
   } else {
     draw(node->l, c);
     draw(node->r, c);
@@ -37,138 +38,156 @@ void BVHAccel::draw(BVHNode *node, const Color& c) const {
 
 void BVHAccel::drawOutline(BVHNode *node, const Color& c) const {
   if (node->isLeaf()) {
-    for (Primitive *p : *(node->prims))
-      p->drawOutline(c);
+    for (size_t i = node->l_ind; i < node->r_ind; i++)
+      prims->at(i)->drawOutline(c);
   } else {
     drawOutline(node->l, c);
     drawOutline(node->r, c);
   }
 }
 
-BVHNode *BVHAccel::construct_bvh(const std::vector<Primitive*>& prims, size_t max_leaf_size) {
-  
-  // TODO Part 2, task 1:
-  // Construct a BVH from the given vector of primitives and maximum leaf
-  // size configuration. The starter code build a BVH aggregate with a
-  // single leaf node (which is also the root) that encloses all the
-  // primitives.
+BVHNode *BVHAccel::construct_bvh_in_range(
+  size_t max_leaf_size,
+  size_t l, size_t r, BBox &bbox
+) {
+  size_t n = r - l;
 
-
-  BBox centroid_box, bbox;
-
-  for (Primitive *p : prims) {
-    BBox bb = p->get_bbox();
-    bbox.expand(bb);
-    Vector3D c = bb.centroid();
-    centroid_box.expand(c);
-  }
-
-  // You'll want to adjust this code.
-  // Right now we just return a single node containing all primitives.
-  BVHNode *node = new BVHNode(bbox);
-  if (prims.size() <= max_leaf_size) {
-    node->prims = new vector<Primitive *>(prims);
+  // If reach threshold size, build a leafs
+  if (n <= max_leaf_size) {
+    BVHNode *node = new BVHNode(bbox);
+    node->l_ind = l;
+    node->r_ind = r;
     return node;
   }
+
+  vector<Primitive*>::iterator it_l = prims->begin() + l,
+    it_r = prims->begin() + r;
+
+  // Find longest dimension of bounding box
+  size_t axis;
   Vector3D extent = bbox.extent;
-  int split_dim;
-  if ((extent.x >= extent.y) && (extent.x >= extent.z)) {
-    split_dim = 0;
-  } else if (extent.y >= extent.z) {
-    split_dim = 1;
+  if (extent[0] > extent[1] && extent[0] > extent[2]) {
+    axis = 0;
+  } else if (extent[1] > extent[0] && extent[1] > extent[2]) {
+    axis = 1;
   } else {
-    split_dim = 2;
+    axis = 2;
   }
-  Vector3D split_point = centroid_box.centroid();
-  std::vector<Primitive *> prims_less;
-  std::vector<Primitive *> prims_greater;
-  if (split_dim == 0) {
-    for (Primitive *p : prims) {
-      Vector3D c = p->get_bbox().centroid();
-      if (c.x < split_point.x) {
-        prims_less.push_back(p);
-      } else {
-        prims_greater.push_back(p);
-      }
-    }
-  } else if (split_dim == 1) {
-    for (Primitive *p : prims) {
-      Vector3D c = p->get_bbox().centroid();
-      if (c.y < split_point.y) {
-        prims_less.push_back(p);
-      } else {
-        prims_greater.push_back(p);
-      }
-    }
-  } else {
-    for (Primitive *p : prims) {
-      Vector3D c = p->get_bbox().centroid();
-      if (c.z < split_point.z) {
-        prims_less.push_back(p);
-      } else {
-        prims_greater.push_back(p);
-      }
-    }
-  }
-  if ((prims_less.size() == 0) || (prims_greater.size() == 0)) {
-    node->prims = new vector<Primitive *>(prims);
-    return node;
-  }
-  node->l = construct_bvh(prims_less, max_leaf_size);
-  node->r = construct_bvh(prims_greater, max_leaf_size);
-  return node;
 
+  int i;
+
+  // Sort by comparator on given axis
+  sort(it_l, it_r, PrimitiveCentroidComparator(axis));
+
+  // Build bboxs of right child candidates
+  // r_bboxes[i] = bbox(prims[l + i:r])
+  vector<BBox> r_bboxes(n);
+  BBox r_bbox;
+  for (i = r - 1; ; i--) {
+    r_bbox.expand(prims->at(i)->get_bbox());
+    r_bboxes[i - l] = r_bbox;
+    if (i == l) {
+      break;
+    }
+  }
+
+  // Find optimum
+  // At iteration i, split as [l:i), [i:r)
+  // l_bbox = bbox(prims[l:l + i])
+  BBox l_bbox = prims->at(l)->get_bbox(), l_bbox_min, r_bbox_min;
+  double sa_l, sa_r, heuristic, min = INF_D;
+  size_t n_l, min_i;
+  for (i = l + 1, n_l = 1; i < r; i++, n_l++) {
+    sa_l = l_bbox.surface_area();
+    sa_r = r_bboxes[n_l].surface_area();
+    heuristic = sa_l * ((double) n_l) + sa_r * ((double) (n - n_l));
+    if (heuristic < min) {
+      min = heuristic;
+      min_i = i;
+      l_bbox_min = l_bbox;
+      r_bbox_min = r_bboxes[n_l];
+    }
+    l_bbox.expand(prims->at(i)->get_bbox());
+  }
+
+  // Build node
+  BVHNode *node = new BVHNode(bbox);
+  // size_t min_i = l + (n >> 1);
+  // BBox l_bbox_min, r_bbox_min;
+  // for (i = l; i < r; i++) {
+  //   if (i < min_i) {
+  //     l_bbox_min.expand(prims->at(i)->get_bbox());
+  //   } else {
+  //     r_bbox_min.expand(prims->at(i)->get_bbox());
+  //   }
+  // }
+  node->l = construct_bvh_in_range(max_leaf_size, l, min_i, l_bbox_min);
+  node->r = construct_bvh_in_range(max_leaf_size, min_i, r, r_bbox_min);
+  return node;
+}
+
+
+BVHNode *BVHAccel::construct_bvh(
+  const vector<Primitive*>& prims, size_t max_leaf_size
+) {
+  BBox bbox;
+  for (Primitive *p : prims) {
+    bbox.expand(p->get_bbox());
+  }
+  this->prims = new vector<Primitive *>(prims);
+  return construct_bvh_in_range(max_leaf_size, 0, prims.size(), bbox);
 }
 
 
 bool BVHAccel::intersect(const Ray& ray, BVHNode *node) const {
-
-  // TODO Part 2, task 3:
-  // Implement BVH intersection.
-  // Currently, we just naively loop over every primitive.
-
-  double t0 = ray.min_t;
-  double t1 = ray.max_t;
+  double t0, t1;
   if (!node->bb.intersect(ray, t0, t1)) {
     return false;
   }
+  if (t1 < ray.min_t || t0 > ray.max_t) {
+    return false;
+  }
+
   if (node->isLeaf()) {
-    for (Primitive *p : *(node->prims)) {
-      if (p->intersect(ray)) { 
+    for (size_t i = node->l_ind; i < node->r_ind; i++) {
+      total_isects++;
+      if (prims->at(i)->intersect(ray)) {
         return true;
       }
     }
     return false;
   }
+
   return intersect(ray, node->l) || intersect(ray, node->r);
 
 }
 
-bool BVHAccel::intersect(const Ray& ray, Intersection* i, BVHNode *node) const {
-
-  // TODO Part 2, task 3:
-  // Implement BVH intersection.
-  // Currently, we just naively loop over every primitive.
-
-  bool hit = false;
-  double t0 = ray.min_t;
-  double t1 = ray.max_t;
+bool BVHAccel::intersect(const Ray& ray, Intersection* isect, BVHNode *node) const {
+  double t0, t1;
   if (!node->bb.intersect(ray, t0, t1)) {
     return false;
   }
+  if (t1 < ray.min_t || t0 > ray.max_t) {
+    return false;
+  }
+
+  bool hit = false;
+
   if (node->isLeaf()) {
-    for (Primitive *p : *(node->prims)) {
-      if (p->intersect(ray, i)) { 
-        total_isects++;
+    for (size_t i = node->l_ind; i < node->r_ind; i++) {
+      total_isects++;
+      if (prims->at(i)->intersect(ray, isect)) {
         hit = true;
       }
     }
     return hit;
   }
-  bool hit1 = intersect(ray, i, node->l);
-  bool hit2 = intersect(ray, i, node->r);
-  hit = hit1 || hit2;
+
+  hit = intersect(ray, isect, node->l);
+  hit |= intersect(ray, isect, node->r);
+
   return hit;
+
 
 }
 

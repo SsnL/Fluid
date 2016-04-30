@@ -18,8 +18,6 @@
 #include "static_scene/triangle.h"
 #include "static_scene/light.h"
 
-#include "particles.h"
-
 using namespace CGL::StaticScene;
 
 using std::min;
@@ -39,6 +37,7 @@ PathTracer::PathTracer(size_t ns_aa,
   this->ns_glsy = ns_diff;
   this->ns_refr = ns_refr;
   this->fluid_particles = NULL; // TODO: this should be set in PathTracer::build_accel
+  this->fluid_particles = new Particles();
 
   if (envmap) {
     this->envLight = new EnvironmentLight(envmap);
@@ -252,6 +251,7 @@ void PathTracer::build_accel() {
   fflush(stdout);
   timer.start();
   bvh = new BVHAccel(primitives);
+  fluid_particles->bvh = bvh;
   timer.stop();
   fprintf(stdout, "Done! (%.4f sec)\n", timer.duration());
 
@@ -400,7 +400,7 @@ void PathTracer::key_press(int key) {
       break;
   case 'm': case 'M':
       fluid_particles->redraw(Color(.5, .5, .5, .25));
-      fprintf(stdout, "[PathTracer] Fluid particles updated.");
+      fprintf(stdout, "[PathTracer] Fluid particles updated.\n");
       break;
   case 'a':
   case 'A':
@@ -414,73 +414,73 @@ void PathTracer::key_press(int key) {
 
 
 Spectrum PathTracer::estimate_direct_lighting(const Ray& r, const Intersection& isect) {
-
-  // TODO Part 3
-
   // make a coordinate system for a hit point
   // with N aligned with the Z direction.
   Matrix3x3 o2w;
+  Vector3D n = isect.n;
   make_coord_space(o2w, isect.n);
   Matrix3x3 w2o = o2w.T();
 
-  // w_out points towards the source of the ray (e.g.,
-  // toward the camera if this is a primary ray)
-  const Vector3D& hit_p = r.o + r.d * isect.t;
-  const Vector3D& w_out = w2o * (-r.d);
+  const Vector3D hit_p = r.o + r.d * isect.t;
+  const Vector3D w_out = w2o * (-r.d) /* object coordinates */;
 
-  Spectrum L_out;
-  double sample_num;
-  for (SceneLight *l : scene->lights) {
-    if (l->is_delta_light()) {
-      sample_num = 1;
+  Spectrum L_out, L_light_sample;
+  size_t num_samples, i;
+  Vector3D w_i /* world coordinates */, w_in /* object coordinates */;
+  float dist_to_light, pdf;
+  BSDF *bsdf = isect.bsdf;
+
+  for (SceneLight *light : scene->lights) {
+    if (light->is_delta_light()) {
+      num_samples = 1;
     } else {
-      sample_num = ns_area_light;
+      num_samples = ns_area_light;
     }
-    for (int i = 0; i < sample_num; i++) {
-      Vector3D wi;
-      float distToLight, pdf;
-      Spectrum sample = l->sample_L(hit_p, &wi, &distToLight, &pdf);
-      Vector3D w_in = w2o * wi;
-      if (w_in.z >= 0.0) {
-        Ray shadow_ray = Ray(hit_p + EPS_D * wi, wi);
-        shadow_ray.max_t = distToLight;
-        if (!bvh->intersect(shadow_ray)) {
-          L_out += sample * isect.bsdf->f(w_out, w_in) * w_in.z * (1.0 / sample_num / pdf);
-        }
+    Spectrum L_light;
+    for (i = 0; i < num_samples; i++) {
+      L_light_sample = light->sample_L(hit_p, &w_i, &dist_to_light, &pdf);
+      w_in = w2o * w_i;
+      if (w_in.z < 0.0) {
+        continue;
       }
+      Ray shadow_ray(hit_p, w_i, EPS_D, dist_to_light);
+      if (bvh->intersect(shadow_ray)) {
+        continue;
+      }
+      L_light += \
+        L_light_sample * bsdf->f(w_out, w_in) * abs_cos_theta(w_in) / pdf;
     }
+    L_out += L_light / ((double) num_samples);
   }
 
   return L_out;
 }
 
-Spectrum PathTracer::estimate_indirect_lighting(const Ray& r, const Intersection& isect) {
-
-  // TODO Part 4
+Spectrum PathTracer::estimate_indirect_lighting(
+  const Ray& r, const Intersection& isect
+) {
 
   Matrix3x3 o2w;
   make_coord_space(o2w, isect.n);
   Matrix3x3 w2o = o2w.T();
 
   Vector3D hit_p = r.o + r.d * isect.t;
-  Vector3D w_out = w2o * (-r.d);
-
-  Vector3D w_in;
+  Vector3D w_out = w2o * (-r.d), w_in;
   float pdf;
-  Spectrum sample = isect.bsdf->sample_f(w_out, &w_in, &pdf);
-  float terminate_prob = sample.illum() * 15;
-  if (terminate_prob > 1.0) {
-    terminate_prob = 1.0;
-  } else if (terminate_prob < 0.0) {
-    terminate_prob = 0.0;
+  BSDF *bsdf = isect.bsdf;
+
+  Spectrum bsdf_spectrum = bsdf->sample_f(w_out, &w_in, &pdf);
+
+  // Russian roulette continue probability
+  double p_cont = fmin(bsdf_spectrum.illum() * 15.0, 1.0);
+  if (coin_flip(p_cont)) {
+    return bsdf_spectrum * trace_ray(
+      Ray(hit_p, o2w * w_in, EPS_D, INF_D, r.depth - 1),
+      bsdf->is_delta()
+    ) * abs_cos_theta(w_in) / p_cont / pdf;
   }
-  if (coin_flip(1.0 - terminate_prob)) {
-    return Spectrum();
-  }
-  Ray indirect_ray = Ray(hit_p + EPS_D * o2w * w_in, o2w * w_in);
-  indirect_ray.depth = r.depth - 1;
-  Spectrum incoming_radi = trace_ray(indirect_ray, isect.bsdf->is_delta());
-  return sample * incoming_radi * fabs(w_in.z) * (1.0 / pdf / terminate_prob);
+
+  return Spectrum();
 
 }
 
@@ -489,30 +489,25 @@ Spectrum PathTracer::trace_ray(const Ray &r, bool includeLe) {
   Intersection isect;
   Spectrum L_out;
 
-  // You will extend this in part 2.
   // If no intersection occurs, we simply return black.
   // This changes if you implement hemispherical lighting for extra credit.
-  if (!bvh->intersect(r, &isect))
+  if (!bvh->intersect(r, &isect)) {
     return L_out;
+  }
 
-  // This line returns a color depending only on the normal vector
-  // to the surface at the intersection point.
-  // Remove it when you are ready to begin Part 3.
   // return normal_shading(isect.n);
 
-  // We only include the emitted light if the previous BSDF was a delta distribution
-  // or if the previous ray came from the camera.
+  // We only include the emitted light if the previous BSDF was a delta
+  // distribution or if the previous ray came from the camera.
   if (includeLe)
     L_out += isect.bsdf->get_emission();
 
-  // You will implement this in part 3.
-  // Delta BSDFs have no direct lighting since they are zero with probability 1 --
-  // their values get accumulated through indirect lighting, where the BSDF
+  // Delta BSDFs have no direct lighting since they are zero with probability 1
+  // -- their values get accumulated through indirect lighting, where the BSDF
   // gets to sample itself.
   if (!isect.bsdf->is_delta())
     L_out += estimate_direct_lighting(r, isect);
 
-  // You will implement this in part 4.
   // If the ray's depth is zero, then the path must terminate
   // and no further indirect lighting is calculated.
   if (r.depth > 0)
@@ -524,27 +519,25 @@ Spectrum PathTracer::trace_ray(const Ray &r, bool includeLe) {
 
 Spectrum PathTracer::raytrace_pixel(size_t x, size_t y) {
 
-  // Part 1, Task 1:
   // Make a loop that generates num_samples camera rays and traces them
   // through the scene. Return the average Spectrum.
 
   int num_samples = ns_aa; // total samples to evaluate
-  Vector2D origin = Vector2D(x,y); // bottom left corner of the pixel
-  double w = frameBuffer.w;
-  double h = frameBuffer.h;
-  if (ns_aa == 1) {
-    Ray r = camera->generate_ray((origin.x + 0.5) / w, (origin.y + 0.5) / h);
+  double w = sampleBuffer.w, h = sampleBuffer.h;
+  if (num_samples == 1) {
+    Ray r = camera->generate_ray((x + 0.5) / w, (y + 0.5) / h);
     r.depth = max_ray_depth;
     return trace_ray(r, true);
   }
   Spectrum s = Spectrum();
-  for (int i = 0; i < num_samples; i++) {
-    Vector2D sample = gridSampler->get_sample() + origin;
-    Ray r = camera->generate_ray(sample.x / w, sample.y / h);
+  Vector2D d;
+  for (size_t i = 0; i < num_samples; i++) {
+    d = gridSampler->get_sample();
+    Ray r = camera->generate_ray((x + d.x) / w, (y + d.y) / h);
     r.depth = max_ray_depth;
     s += trace_ray(r, true);
   }
-  return s / double(num_samples);
+  return s / ((double) ns_aa);
 }
 
 void PathTracer::raytrace_tile(int tile_x, int tile_y,

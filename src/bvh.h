@@ -21,10 +21,9 @@ namespace CGL { namespace StaticScene {
  */
 struct BVHNode {
 
-  BVHNode(BBox bb): bb(bb), l(NULL), r(NULL), prims(NULL) { }
+  BVHNode(BBox bb): bb(bb), l(NULL), r(NULL) { };
 
   ~BVHNode() {
-    if (prims) delete prims;
     if (l) delete l;
     if (r) delete r;
   }
@@ -34,8 +33,19 @@ struct BVHNode {
   BBox bb;        ///< bounding box of the node
   BVHNode* l;     ///< left child node
   BVHNode* r;     ///< right child node
-  std::vector<Primitive *> *prims;
+  size_t l_ind;   ///< left end in all prims
+  size_t r_ind;   ///< right end in all prims
+};
 
+struct PrimitiveCentroidComparator {
+  size_t axis = 0;
+
+  PrimitiveCentroidComparator(size_t axis): axis(axis) { };
+
+  bool operator() ( Primitive *p_a, Primitive *p_b )
+  {
+    return p_a->get_bbox().centroid()[axis] < p_b->get_bbox().centroid()[axis];
+  }
 };
 
 /**
@@ -135,8 +145,12 @@ class BVHAccel : public Aggregate {
 
   mutable unsigned long long total_rays, total_isects;
  private:
+  std::vector<Primitive*> *prims; ///< all primitives
   BVHNode* root; ///< root node of the BVH
   BVHNode *construct_bvh(const std::vector<Primitive*>& prims, size_t max_leaf_size);
+  BVHNode *construct_bvh_in_range(size_t max_leaf_size,
+    size_t l, size_t r, BBox &bbox
+  );
 };
 
 } // namespace StaticScene

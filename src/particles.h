@@ -52,11 +52,9 @@ namespace StaticScene {
     Particle(
       const SphereObject* object,
       const Vector3D& v,
-      const Vector3D& pos,
-      const double r,
       const double rest_density
     ) :
-      StaticScene::Sphere(object, pos, r),
+      StaticScene::Sphere(object, object->o, object->r),
       velocity(v),
       rest_density(rest_density) { }
 
@@ -119,13 +117,14 @@ struct Particles {
 
   // TODO: Also set PS, FS, and BVH
   Particles() : bvh(NULL), simulate_time(0.0) {
-    ps.push_back(new Particle(
-      new StaticScene::SphereObject(Vector3D(10, 10, 10), 1.0f, new DiffuseBSDF(Spectrum(0.5f,0.5f,0.5f))),
-      Vector3D(0, 0, 2),
-      Vector3D(10, 10, 10),
-      1.0f,
-      1.0f
-    ));
+    for (int i = -2; i < 3; i++)
+      for (int j = 0; j < 3; j++)
+        for (int k = -2; k < 3; k++)
+          ps.push_back(new Particle(
+            new StaticScene::SphereObject(Vector3D(0.12 * i, 0.12 * j + 1, 0.12 * k), 0.05f, new DiffuseBSDF(Spectrum(0.5f,0.5f,0.5f))),
+            Vector3D(0, 0, 2),
+            1.0f
+          ));
   };
 
   // return True iff t > current time.

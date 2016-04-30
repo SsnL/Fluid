@@ -281,6 +281,7 @@ void PathTracer::visualize_accel() const {
   glPolygonOffset(1.0, 1.0);
   glEnable(GL_POLYGON_OFFSET_FILL);
 
+  fluid_particles->redraw(Color(1, 1, 1, 1));
   if (selected->isLeaf()) {
     bvh->draw(selected, cprim_hl_left);
   } else {

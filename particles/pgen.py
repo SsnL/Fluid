@@ -28,15 +28,10 @@ def add_particle(ps, pos, v, r):
   ET.SubElement(p, "v").text = str(v[0])+" "+str(v[1])+" "+str(v[2])
   ET.SubElement(p, "r").text = str(r)
 
-def build_tree():
+def build_tree(size, dis, r):
   particles = ET.Element("particles")
   ps = ET.SubElement(particles, "ps")
   #fs = ET.SubElement(particles, "fs")
-
-
-  size = 3;
-  dis = 0.12;
-  r = 0.05
 
   for i in range(1-size, size):
     for j in range(0,size):
@@ -46,5 +41,17 @@ def build_tree():
   indent(particles)
   return ET.ElementTree(particles)
 
-tree = build_tree()
-tree.write("p1.xml")
+args = sys.argv
+if len(args) != 5:
+  print "  usage: ./pgen.py <size> <dis> <radius> <outputfile>"
+  print "  Example: ./pgen.py 3 0.12 0.05 p.xml"
+  print "  <size> controls the number of particles"
+  print "  <dis> controls how close the particles are to each other"
+else:
+  size = int(args[1])
+  dis  = float(args[2])
+  r    = float(args[3])
+  outputfile = str(args[4])
+
+  tree = build_tree(size,dis,r)
+  tree.write(outputfile)

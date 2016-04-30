@@ -385,7 +385,7 @@ DynamicScene::SceneObject *Application::init_sphere(
 
 Particle *Application::init_particle(
     Vector3D& pos, Vector3D& v, float r) {
-   Particle* p = new Particle(nullptr, v, pos, r, 1.0);  
+   Particle* p = new Particle(new SphereObject(pos,r, NULL), v, 1.0);  
    return p;
 }
 

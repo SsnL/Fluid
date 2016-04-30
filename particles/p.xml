@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<particles>
+   <ps>
+     <particle>
+       <pos>100.1 100.2 100.3</pos>
+       <v>100.1 100.1 100.1</v>
+       <r>100.5</r>
+     </particle>
+      <particle>
+       <pos>100 200 300</pos>
+       <v>1.0 1 1</v>
+       <r>200</r>
+     </particle>
+   </ps>
+   <fs>
+   </fs>
+</particles>

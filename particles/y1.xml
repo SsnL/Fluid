@@ -1,0 +1,139 @@
+<particles>
+  <ps>
+    <particle>
+      <pos>0 0 0</pos>
+      <v>0 0 0</v>
+      <r>0</r>
+    </particle>
+    <particle>
+      <pos>0 0 1</pos>
+      <v>0 0 0</v>
+      <r>0</r>
+    </particle>
+    <particle>
+      <pos>0 0 2</pos>
+      <v>0 0 0</v>
+      <r>0</r>
+    </particle>
+    <particle>
+      <pos>0 1 0</pos>
+      <v>0 0 0</v>
+      <r>0</r>
+    </particle>
+    <particle>
+      <pos>0 1 1</pos>
+      <v>0 0 0</v>
+      <r>0</r>
+    </particle>
+    <particle>
+      <pos>0 1 2</pos>
+      <v>0 0 0</v>
+      <r>0</r>
+    </particle>
+    <particle>
+      <pos>0 2 0</pos>
+      <v>0 0 0</v>
+      <r>0</r>
+    </particle>
+    <particle>
+      <pos>0 2 1</pos>
+      <v>0 0 0</v>
+      <r>0</r>
+    </particle>
+    <particle>
+      <pos>0 2 2</pos>
+      <v>0 0 0</v>
+      <r>0</r>
+    </particle>
+    <particle>
+      <pos>1 0 0</pos>
+      <v>0 0 0</v>
+      <r>1</r>
+    </particle>
+    <particle>
+      <pos>1 0 1</pos>
+      <v>0 0 0</v>
+      <r>1</r>
+    </particle>
+    <particle>
+      <pos>1 0 2</pos>
+      <v>0 0 0</v>
+      <r>1</r>
+    </particle>
+    <particle>
+      <pos>1 1 0</pos>
+      <v>0 0 0</v>
+      <r>1</r>
+    </particle>
+    <particle>
+      <pos>1 1 1</pos>
+      <v>0 0 0</v>
+      <r>1</r>
+    </particle>
+    <particle>
+      <pos>1 1 2</pos>
+      <v>0 0 0</v>
+      <r>1</r>
+    </particle>
+    <particle>
+      <pos>1 2 0</pos>
+      <v>0 0 0</v>
+      <r>1</r>
+    </particle>
+    <particle>
+      <pos>1 2 1</pos>
+      <v>0 0 0</v>
+      <r>1</r>
+    </particle>
+    <particle>
+      <pos>1 2 2</pos>
+      <v>0 0 0</v>
+      <r>1</r>
+    </particle>
+    <particle>
+      <pos>2 0 0</pos>
+      <v>0 0 0</v>
+      <r>2</r>
+    </particle>
+    <particle>
+      <pos>2 0 1</pos>
+      <v>0 0 0</v>
+      <r>2</r>
+    </particle>
+    <particle>
+      <pos>2 0 2</pos>
+      <v>0 0 0</v>
+      <r>2</r>
+    </particle>
+    <particle>
+      <pos>2 1 0</pos>
+      <v>0 0 0</v>
+      <r>2</r>
+    </particle>
+    <particle>
+      <pos>2 1 1</pos>
+      <v>0 0 0</v>
+      <r>2</r>
+    </particle>
+    <particle>
+      <pos>2 1 2</pos>
+      <v>0 0 0</v>
+      <r>2</r>
+    </particle>
+    <particle>
+      <pos>2 2 0</pos>
+      <v>0 0 0</v>
+      <r>2</r>
+    </particle>
+    <particle>
+      <pos>2 2 1</pos>
+      <v>0 0 0</v>
+      <r>2</r>
+    </particle>
+    <particle>
+      <pos>2 2 2</pos>
+      <v>0 0 0</v>
+      <r>2</r>
+    </particle>
+  </ps>
+</particles>

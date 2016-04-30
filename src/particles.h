@@ -65,7 +65,7 @@ namespace StaticScene {
     void initializeWithNewNeighbors();
 
     // naive force and velocity
-    void applyForceVelocity(double delta_t);
+    void applyForceVelocity(BVHAccel *bvh, double delta_t);
 
     // Newton step density constraint
     void newtonStepCalculateLambda();
@@ -121,9 +121,9 @@ struct Particles {
       for (int j = 0; j < 3; j++)
         for (int k = -2; k < 3; k++)
           ps.push_back(new Particle(
-            new StaticScene::SphereObject(Vector3D(0.12 * i, 0.12 * j + 1, 0.12 * k), 0.05f, new DiffuseBSDF(Spectrum(0.5f,0.5f,0.5f))),
-            Vector3D(0, 0, 2),
-            1.0f
+            new StaticScene::SphereObject(Vector3D(0.12 * i, 0.12 * j + 1, 0.12 * k), 0.05f, NULL),
+            Vector3D(0, 0, 0),
+            12.0f
           ));
   };
 

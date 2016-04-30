@@ -400,7 +400,10 @@ void PathTracer::key_press(int key) {
       }
       break;
   case 'm': case 'M':
-      fluid_particles->redraw(Color(.5, .5, .5, .25));
+      // fluid_particles->redraw(Color(.5, .5, .5, .25));
+      fluid_particles->timeStep(0.01);
+      clear();
+      visualize_accel();
       fprintf(stdout, "[PathTracer] Fluid particles updated.\n");
       break;
   case 'a':

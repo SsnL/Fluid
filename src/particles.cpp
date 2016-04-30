@@ -39,13 +39,16 @@ namespace CGL {
     }
   }
 
-  void Particle::applyForceVelocity(double delta_t) {
+  void Particle::applyForceVelocity(BVHAccel *bvh, double delta_t) {
     // for (Force *f : particles->fs) {
     //   velocity += delta_t * f->getAccerlation(particles->simulate_time, *this);
     // }
     // assume only gravity for now
     velocity.z -= 9.8 * delta_t;
-    new_origin = origin() + delta_t * velocity;
+    double v_l = velocity.norm();
+    Ray r(origin(), velocity / v_l, -EPS_D, v_l);
+    bvh->intersect(r);
+    new_origin = origin() + r.d * r.max_t;
   }
 
   void Particle::newtonStepCalculateLambda() {
@@ -74,8 +77,9 @@ namespace CGL {
       delta_p += (neighbors[i]->lambda + lambda + s_corr[i]) * grad_w_neighbors[i];
     }
     delta_p /= rest_density;
-    Vector3D direction = delta_p.unit();
-    Ray r(origin(), direction, delta_p.norm());
+    double l = delta_p.norm();
+    Vector3D direction = delta_p / l;
+    Ray r(origin(), direction, -EPS_D, l);
     bvh->intersect(r);
     delta_p = direction * r.max_t;
     new_origin += delta_p;
@@ -137,9 +141,9 @@ namespace CGL {
     }
     for (Particle *p : ps) {
       p->initializeWithNewNeighbors();
-      p->applyForceVelocity(delta_t);
+      p->applyForceVelocity(bvh, delta_t);
     }
-    for (size_t i = 0; i < NEWTON_NUM_STEPS; i++) {
+    for (size_t i = 0; i < 1; i++) {
       for (Particle *p : ps) {
         p->newtonStepCalculateLambda();
       }
@@ -149,23 +153,20 @@ namespace CGL {
     }
     for (Particle *p : ps) {
       p->updateVelocity(delta_t);
-      p->calculateVorticityApplyXSPHViscosity();
+    //   p->calculateVorticityApplyXSPHViscosity();
     }
     for (Particle *p : ps) {
-      p->applyVorticity(delta_t);
+      // p->applyVorticity(delta_t);
+      cout << p->getLatestDensityEstimate() << endl;
       p->updatePosition();
+      // cout << p->origin() << p->velocity << endl;
     }
   }
 
   void Particles::redraw(const Color& c) {
-    // simulateToTime(simulate_time + DEFAULT_DELTA_T);
-    // glPolygonOffset(1.0, 1.0);
-    // glEnable(GL_POLYGON_OFFSET_FILL);
-    // Misc::draw_sphere_opengl(Vector3D(), 1, Color(1,1,1,1));
     for (Particle *p : ps) {
       Misc::draw_sphere_opengl(p->origin(), p->radius(), c);
     }
-    // glDisable(GL_POLYGON_OFFSET_FILL);
   }
 
 }  // namespace CGL

@@ -333,6 +333,7 @@ int Application::load_particles(const char* filename) {
       particles->ps.push_back(init_particle(pos,v,r));
       p = p->NextSiblingElement("particle");
   }
+  pathtracer->fluid_particles = particles;
   return 0;
 }
 

@@ -1,3 +1,5 @@
+#!/usr/bin/python
+import sys
 import xml.etree.cElementTree as ET
 
 '''
@@ -30,14 +32,19 @@ def build_tree():
   particles = ET.Element("particles")
   ps = ET.SubElement(particles, "ps")
   #fs = ET.SubElement(particles, "fs")
- 
-  for i in range(3):
-    for j in range(3):
-      for k in range(3):
-        add_particle(ps, [i,j,k], [0,0,0], i) 
+
+
+  size = 3;
+  dis = 0.12;
+  r = 0.05
+
+  for i in range(1-size, size):
+    for j in range(0,size):
+      for k in range(1-size,size):
+        add_particle(ps, [dis*i,dis*j+1,dis*k], [0,0,0], r) 
   
   indent(particles)
   return ET.ElementTree(particles)
 
 tree = build_tree()
-tree.write("y1.xml")
+tree.write("p1.xml")

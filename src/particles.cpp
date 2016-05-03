@@ -4,7 +4,9 @@
 #include "misc/sphere_drawing.h"
 
 // params
-// artificial pressure denom
+// particle visualization radius
+#define VIS_RADIUS 0.02
+// default time step
 #define DEFAULT_DELTA_T 0.016
 // used in SPH density estimation
 #define H 0.5
@@ -26,8 +28,6 @@
 #define VORTICITY_EPSILON 0.01
 // XSPH viscocity
 #define C 0.0001
-
-using namespace CGL::StaticScene;
 
 namespace CGL {
   inline void clamp(Vector3D &p, Vector3D delta_p, BVHAccel *bvh) {
@@ -85,7 +85,7 @@ namespace CGL {
   double Particle::tensile_instability_scale = 1.0 / poly6_kernel(Vector3D(0, 0, 0.1 * H));
 
   std::ostream& operator<<( std::ostream& os, Particle& v ) {
-    os << "P(p" << v.newOrigin() << ",v" << v.velocity << ')';
+    os << "P(p" << v.getNewPosition() << ",v" << v.velocity << ')';
     return os;
   }
 
@@ -105,8 +105,8 @@ namespace CGL {
     // }
     // assume only gravity for now
     velocity.y -= 9.8 * delta_t;
-    new_origin = origin();
-    clamp(new_origin, velocity * delta_t, bvh);
+    new_position = position;
+    clamp(new_position, velocity * delta_t, bvh);
   }
 
   void Particle::newtonStepCalculateLambda() {
@@ -114,7 +114,7 @@ namespace CGL {
     double denom = 0.0;
     Vector3D grad_i_c_i;
     for (size_t i = 0; i < neighbors.size(); i++) {
-      Vector3D r = new_origin - neighbors[i]->new_origin;
+      Vector3D r = new_position - neighbors[i]->new_position;
       double w_i_n = poly6_kernel(r);
       Vector3D grad_w_i_n = grad_spiky_kernel(r);
       // SPH density esitmator
@@ -136,23 +136,26 @@ namespace CGL {
       delta_p += (lambda + neighbors[i]->lambda + s_corr[i]) * grad_w_neighbors[i];
     }
     delta_p /= rest_density;
-    clamp(new_origin, delta_p, bvh);
+    clamp(new_position, delta_p, bvh);
   }
 
   void Particle::updateVelocity(double delta_t) {
-    velocity = (new_origin - origin()) / delta_t;
+    velocity = (new_position - position) / delta_t;
   }
 
   void Particle::calculateVorticityApplyXSPHViscosity() {
     vorticity = Vector3D();
     Vector3D viscocity;
+    density = 0.0;
     for (size_t i = 0; i < neighbors.size(); i++) {
       Vector3D v_i_n = neighbors[i]->velocity - velocity;
-      Vector3D r = new_origin - neighbors[i]->new_origin;
+      Vector3D r = new_position - neighbors[i]->new_position;
       Vector3D grad_w_i_n = grad_spiky_kernel(r);
       vorticity += cross(v_i_n, grad_w_i_n);
-      viscocity += v_i_n * poly6_kernel(r);
+      double w_i_n = poly6_kernel(r);
+      viscocity += v_i_n * w_i_n;
       grad_w_neighbors[i] = grad_w_i_n;
+      density += w_i_n;
     }
     velocity += C * viscocity;
   }
@@ -166,7 +169,7 @@ namespace CGL {
   }
 
   void Particle::updatePosition() {
-    origin() = new_origin;
+    position = new_position;
   }
 
   void Particles::timeStep(double delta_t) {
@@ -179,7 +182,7 @@ namespace CGL {
     }
     for (size_t i = 0; i < ps.size(); i++) {
       for (size_t j = i + 1; j < ps.size(); j++) {
-        if ((ps[i]->newOrigin() - ps[j]->newOrigin()).norm2() <= H2) {
+        if ((ps[i]->getNewPosition() - ps[j]->getNewPosition()).norm2() <= H2) {
           ps[i]->neighbors.push_back(ps[j]);
           ps[j]->neighbors.push_back(ps[i]);
         }
@@ -223,7 +226,7 @@ namespace CGL {
 
   void Particles::redraw(const Color& c) {
     for (Particle *p : ps) {
-      Misc::draw_sphere_opengl(p->origin(), p->radius(), p->color);
+      Misc::draw_sphere_opengl(p->getPosition(), VIS_RADIUS, p->getDensityBasedColor());
     }
   }
 
@@ -236,12 +239,14 @@ namespace CGL {
       << "\tTensile artificial pressure coefficient K: " << K << endl
       << "\tTensile artificial pressure exponent N: " << N << endl
       << "\tVorticity confinement coefficient epsilon: " << VORTICITY_EPSILON << endl
-      << "\tViscosity coefficient C: " << C << endl;
+      << "\tViscosity coefficient C: " << C << endl
+      << "\tParticle visualization radius: " << VIS_RADIUS << endl;
     return ss.str();
   }
 
 }  // namespace CGL
 
+#undef VIS_RADIUS
 #undef DEFAULT_DELTA_T
 #undef H
 #undef H2

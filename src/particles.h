@@ -13,73 +13,78 @@ using namespace CGL::StaticScene;
 
 namespace CGL {
 
-/* Allow use in CGL::StaticScene::Particle. */
 struct Particles;
 
-/* Keep the subclass in CGL::StaticScene as a good practice. */
-namespace StaticScene {
-  class Particle : public Sphere {
-   public:
-    Vector3D velocity;
-    const double rest_density;
-    std::vector<Particle *> neighbors; // changing during simulation
-    Color color;
+class Particle {
+ public:
+  Vector3D velocity;
+  const double rest_density;
+  std::vector<Particle *> neighbors; // changing during simulation
 
-    static double tensile_instability_scale;
+  static double tensile_instability_scale;
 
-    Particle(
-      const SphereObject* object,
-      const Vector3D& v,
-      const double rest_density,
-      Color c = Color(1, 1, 1, 1)
-    ) :
-      StaticScene::Sphere(object, object->o, object->r),
-      velocity(v),
-      rest_density(rest_density),
-      color(c),
-      new_origin(object->o) { }
+  Particle(
+    const Vector3D &p,
+    const Vector3D &v,
+    const double rest_density
+  ) :
+    position(p),
+    new_position(p),
+    velocity(v),
+    rest_density(rest_density) { }
 
-    double getLatestDensityEstimate() {
-      return density;
-    }
+  double getLatestDensityEstimate() {
+    return density;
+  }
 
-    Vector3D newOrigin() {
-      return new_origin;
-    }
+  inline Vector3D getPosition() {
+    return position;
+  }
 
-    void initializeWithNewNeighbors();
+  inline Vector3D getNewPosition() {
+    return new_position;
+  }
 
-    // naive force and velocity
-    void applyForceVelocity(BVHAccel *bvh, double delta_t);
+  Color getDensityBasedColor() {
+    double ratio = (density - 0.8 * rest_density) / (0.4 * rest_density),
+      clamp_ratio = min(1.0, max(0.0, ratio));
+    return Color(1.0, 1.0 - clamp_ratio, 1.0 - clamp_ratio, 1.0);
+  }
 
-    // Newton step density constraint
-    void newtonStepCalculateLambda();
-    void newtonStepUpdatePosition(BVHAccel *bvh);
+  void initializeWithNewNeighbors();
 
-    // update velocity basing on new position
-    // positions is unchanged
-    void updateVelocity(double delta_t);
+  // naive force and velocity
+  void applyForceVelocity(BVHAccel *bvh, double delta_t);
 
-    // calculate vorticity and apply XSPH viscosity
-    void calculateVorticityApplyXSPHViscosity();
+  // Newton step density constraint
+  void newtonStepCalculateLambda();
+  void newtonStepUpdatePosition(BVHAccel *bvh);
 
-    // apply vorticity confinement
-    void applyVorticity(double delta_t);
+  // update velocity basing on new position
+  // positions is unchanged
+  void updateVelocity(double delta_t);
 
-    // update position to
-    void updatePosition();
+  // calculate vorticity and apply XSPH viscosity
+  void calculateVorticityApplyXSPHViscosity();
 
-   private:
-    Vector3D new_origin;
-    // SPH estimate, changing during simulation
-    double density;
-    double lambda; // changing during simulation
-    Vector3D vorticity; // changing during simulation
-    std::vector<double> s_corr; // changing during simulation, same order as neighbors
-    std::vector<Vector3D> grad_w_neighbors; // changing during simulation, same order as neighbors
-  };
+  // apply vorticity confinement
+  void applyVorticity(double delta_t);
 
-} // namespace StaticScene
+  // update position to
+  void updatePosition();
+
+ private:
+  // accurate between simulation timesteps
+  Vector3D position;
+  // always ``newer'' than positions in simulation process sense
+  Vector3D new_position;
+  // SPH estimate, changing during simulation
+  double density;
+  double lambda; // changing during simulation
+  Vector3D vorticity; // changing during simulation
+  std::vector<double> s_corr; // changing during simulation, same order as neighbors
+  std::vector<Vector3D> grad_w_neighbors; // changing during simulation, same order as neighbors
+};
 
 std::ostream &operator<<(std::ostream &os, const Particle &v);
 
@@ -104,10 +109,9 @@ struct Particles {
     //   for (int j = 0; j < 5; j++)
     //     for (int k = -6; k < 6; k++)
     //       ps.push_back(new Particle(
-    //         new StaticScene::SphereObject(Vector3D(0.15 * i, 0.2 * j + 0.5, 0.15 * k), 0.02f, NULL),
+    //         Vector3D(0.15 * i, 0.2 * j + 0.5, 0.15 * k),
     //         Vector3D(0, -0.01, 0),
-    //         150.0f,
-    //         Color(random_uniform(), random_uniform(), random_uniform(), 1)
+    //         150.0f
     //       ));
   };
 

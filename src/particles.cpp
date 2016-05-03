@@ -1,6 +1,7 @@
 #include "particles.h"
 #include "misc/sphere_drawing.h"
 #include "GL/glew.h"
+#include "marching.cpp"
 
 // params
 // artificial pressure denom
@@ -226,6 +227,77 @@ namespace CGL {
     }
   }
 
+  GRIDCELL generate_gridcell(float x1, float x2, float y1, float y2, float z1, float z2) {
+
+  }
+
+  /*     
+    hardcoded min and max coordinates of particels
+    x: [-1,1]
+    y: [0,1.5]
+    z: [-1,1]
+  */
+
+  double Particles::get_min(int axis){
+    switch(axis) {
+      case(0):return -1;
+      case(1):return -0;
+      case(2):return -1;
+    }
+  }
+
+  double Particles::get_max(int axis){
+    switch(axis) {
+      case(0):return 1;
+      case(1):return 1.5;
+      case(2):return 1;
+    }
+  }
+
+
+  void Particles::add_triangle_to_mesh(const Mesh* mesh, XYZ p0, XYZ p1, XYZ p2) {
+
+     size_t base = mesh->vertices.size();
+     mesh->vertices.push_back(v0);
+     mesh->vertices.push_back(v1);
+     mesh->vertices.push_back(v2);
+     Polygon poly;
+     poly.vertex_indices.push_back(base);
+     poly.vertex_indices.push_back(base + 1);
+     poly.vertex_indices.push_back(base + 2);
+     mesh->polygons.push_back(poly);
+  }
+
+  vector<Primitive *> Particles::add_to_mesh(const Mesh* mesh, float fStepSize) {
+    double isolevel; // the threshold isolevel
+    float xmin = get_min(0);
+    float ymin = get_min(1);
+    float zmin = get_min(2);
+    float xmax = get_max(0);
+    float ymax = get_max(1);
+    float zmax = get_max(2);
+    int xsteps = (int)((xmax-xmin)/fStepSize);
+    int ysteps = (int)((ymax-ymin)/fStepSize);
+    int zsteps = (int)((zmax-zmin)/fStepSize);
+    
+    vector<Primitives *> prims;
+    
+    for (int ix = 0; ix <= xsteps; ix++) 
+      for (int iy = 0; iy <= ysteps; iy++) 
+       for (int iz = 0; iz <= zsteps; iz++) {
+         GRIDCELL grid = generate_gridcell();
+         TRIANGLE *triangles = TRIANGLE[16];
+         
+         int ntriangles = Polygonize(grid, isolevel, triangles);
+         vMarchCube(ix*fStepSize, iy*fStepSize, iz*fStepSize, fStepSize); 
+         for (int i=0; i<ntriangles; i++) {
+           Vector3D p0 = triangles[i][0];
+           Vector3D p1 = triangles[i][1];
+           Vector3D p2 = triangles[i][2];
+           add_triangle_to_mesh(mesh,p0,p1,p2);
+         }
+    }
+  }
 }  // namespace CGL
 
 #undef DEFAULT_DELTA_T

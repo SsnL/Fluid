@@ -1,4 +1,4 @@
-# Fluid renderer with subsurface structure
+# Fluid renderer
 
 ## Summary
 In this project, we want to support fluid simulation and display the simulated result with rendering algorithms. In order to achieve more realistic rendering, we also plan to implement subsurface scattering of fluid.
@@ -7,6 +7,14 @@ In this project, we want to support fluid simulation and display the simulated r
 + Chuqian Li
 + Tongzhou Wang
 + Huirong Zhu
+
+## Usage
++ `-p [xml file]` imports a particle file with initial position, initial velocity, visual radius, and rest density.
++ Particles are drawn in visualization mode, but not in edit mode,
+    + `m` continues fluid simulation by one default time step.
+    + `c` continues fluid simulation by 1s in time.
+    + `g` continues fluid simulation by 1s in time, and save each simulated step as png screenshots.
+    + `s` writes a png screenshot.
 
 ## Background
 ### Challenges

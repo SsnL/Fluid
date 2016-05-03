@@ -82,16 +82,6 @@ class Sphere : public Primitive {
   */
   void drawOutline(const Color& c) const;
 
-  /* Needed for Particle subclass. */
-  inline Vector3D &origin() {
-    return this->o;
-  }
-
-  /* Needed for Particle subclass. */
-  inline double &radius() {
-    return this->r;
-  }
-
  private:
 
   /**

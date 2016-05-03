@@ -92,9 +92,9 @@ class Application : public Renderer {
   void load(Collada::SceneInfo* sceneInfo);
   Vector3D stov(std::string s);
   void load_particles(const char* filename);
-  void render_to_file(std::string filename) { 
+  void render_to_file(std::string filename) {
     set_up_pathtracer();
-    pathtracer->render_to_file(filename); 
+    pathtracer->render_to_file(filename);
   }
 
  private:
@@ -152,7 +152,6 @@ class Application : public Renderer {
   void init_camera(Collada::CameraInfo& camera, const Matrix4x4& transform);
   DynamicScene::SceneLight *init_light(Collada::LightInfo& light, const Matrix4x4& transform);
   DynamicScene::SceneObject *init_sphere(Collada::SphereInfo& polymesh, const Matrix4x4& transform);
-  Particle *init_particle(Vector3D& pos, Vector3D& v, float r);
   DynamicScene::SceneObject *init_polymesh(Collada::PolymeshInfo& polymesh, const Matrix4x4& transform);
   void init_material(Collada::MaterialInfo& material);
 

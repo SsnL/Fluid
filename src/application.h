@@ -152,7 +152,7 @@ class Application : public Renderer {
   void init_camera(Collada::CameraInfo& camera, const Matrix4x4& transform);
   DynamicScene::SceneLight *init_light(Collada::LightInfo& light, const Matrix4x4& transform);
   DynamicScene::SceneObject *init_sphere(Collada::SphereInfo& polymesh, const Matrix4x4& transform);
-  Particle *init_particle(Vector3D& pos, Vector3D& v, float r);
+  Particle *init_particle(Vector3D& pos, Vector3D& v, float r, float d);
   DynamicScene::SceneObject *init_polymesh(Collada::PolymeshInfo& polymesh, const Matrix4x4& transform);
   void init_material(Collada::MaterialInfo& material);
 

@@ -165,8 +165,29 @@ namespace CGL {
 
   void Particles::redraw(const Color& c) {
     for (Particle *p : ps) {
-      Misc::draw_sphere_opengl(p->origin(), p->radius(), c);
+      Misc::draw_sphere_opengl(p->origin(), p->radius());
     }
+  }
+
+  xx Particles::marchingTiles(std::vector<Vector3D> ps, double r_outer) {
+
+  }
+
+  void Particles::surfacing() {
+    // std::vector<Vector3D> x = marchingTiles(ps, r_outer);
+    // Matrix3x3 A = laplacian(x);
+    // for (int i = 0; i < 5; i++) {
+    //   GaussSiedel(transpose(x) * A * x, true);
+    // }
+    // Matrix3x3 B = bilaplacian(x);
+    // for (int i = 0; i < 25; i++) {
+    //   GaussSiedel(transpose(x) * B * x, true);
+    // }
+    // for (int i = 0; i < 5; i++) {
+    //   GaussSiedel(transpose(x) * B * x, false);
+    // }
+    // // draw x
+
   }
 
 }  // namespace CGL

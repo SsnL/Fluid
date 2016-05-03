@@ -22,9 +22,7 @@ namespace StaticScene {
    public:
     Vector3D velocity;
     const double rest_density;
-    // const double mass;
     std::vector<Particle *> neighbors; // changing during simulation
-    // Vector3D vorticity;
     Color color;
 
     static double tensile_instability_scale;

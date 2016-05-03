@@ -19,6 +19,7 @@ using namespace CGL;
 void usage(const char* binaryName) {
   printf("Usage: %s [options] <scenefile>\n", binaryName);
   printf("Program Options:\n");
+  printf("  -p  <PATH>       Path to particle definition");
   printf("  -s  <INT>        Number of camera rays per pixel\n");
   printf("  -l  <INT>        Number of samples per area light\n");
   printf("  -t  <INT>        Number of render threads\n");
@@ -76,7 +77,8 @@ int main( int argc, char** argv ) {
   bool write_to_file = false;
   size_t w = 0, h = 0;
   string filename;
-  while ( (opt = getopt(argc, argv, "s:l:t:m:e:h:f:r:")) != -1 ) {  // for each option...
+  string particle_path;
+  while ( (opt = getopt(argc, argv, "s:l:t:m:e:h:f:r:p:")) != -1 ) {  // for each option...
     switch ( opt ) {
     case 'f':
         write_to_file = true;
@@ -102,6 +104,10 @@ int main( int argc, char** argv ) {
     case 'e':
         config.pathtracer_envmap = load_exr(optarg);
         break;
+    case 'p':
+        particle_path = string(optarg);
+        msg(particle_path);
+        break;
     default:
         usage(argv[0]);
         return 1;
@@ -124,6 +130,7 @@ int main( int argc, char** argv ) {
     exit(0);
   }
 
+
   // create application
   Application *app  = new Application(config, !write_to_file);
 
@@ -131,6 +138,8 @@ int main( int argc, char** argv ) {
   if (write_to_file) {
     app->init();
     app->load(sceneInfo);
+    // load particles
+    app->load_particles(particle_path.c_str());
     delete sceneInfo;
 
     if (w && h)
@@ -152,6 +161,11 @@ int main( int argc, char** argv ) {
   // load scene
   app->load(sceneInfo);
 
+  // load particles
+  app->load_particles(particle_path.c_str());
+  // msg(app->particles->ps[0]->origin());
+  // msg(app->particles->ps[0]->velocity);
+  // msg(app->particles->ps[0]->radius());
   delete sceneInfo;
 
   // start viewer

@@ -103,39 +103,15 @@ struct Particles {
 
   // TODO: Also set PS, FS, and BVH
   Particles() : bvh(NULL), simulate_time(0.0) {
-    for (int i = -6; i < 6; i++)
-      for (int j = 0; j < 5; j++)
-        for (int k = -6; k < 6; k++)
-          ps.push_back(new Particle(
-            new StaticScene::SphereObject(Vector3D(0.15 * i, 0.2 * j + 0.5, 0.15 * k), 0.02f, NULL),
-            Vector3D(0, -0.01, 0),
-            150.0f,
-            Color(random_uniform(), random_uniform(), random_uniform(), 1)
-          ));
-    // ps.push_back(new Particle(
-    //   new StaticScene::SphereObject(Vector3D(-0.05, 1, 0), 0.02f, NULL),
-    //   Vector3D(0, 0, 0),
-    //   170.0f,
-    //   Color(random_uniform(), random_uniform(), random_uniform(), 1)
-    // ));
-    // ps.push_back(new Particle(
-    //   new StaticScene::SphereObject(Vector3D(0.05, 1, 0), 0.02f, NULL),
-    //   Vector3D(0, 0, 0),
-    //   170.0f,
-    //   Color(random_uniform(), random_uniform(), random_uniform(), 1)
-    // ));
-    // ps.push_back(new Particle(
-    //   new StaticScene::SphereObject(Vector3D(-0.05, 1, -0.05), 0.02f, NULL),
-    //   Vector3D(0, 0, 0),
-    //   170.0f,
-    //   Color(random_uniform(), random_uniform(), random_uniform(), 1)
-    // ));
-    // ps.push_back(new Particle(
-    //   new StaticScene::SphereObject(Vector3D(0.05, 1, 0.05), 0.02f, NULL),
-    //   Vector3D(0, 0, 0),
-    //   170.0f,
-    //   Color(random_uniform(), random_uniform(), random_uniform(), 1)
-    // ));
+    // for (int i = -6; i < 6; i++)
+    //   for (int j = 0; j < 5; j++)
+    //     for (int k = -6; k < 6; k++)
+    //       ps.push_back(new Particle(
+    //         new StaticScene::SphereObject(Vector3D(0.15 * i, 0.2 * j + 0.5, 0.15 * k), 0.02f, NULL),
+    //         Vector3D(0, -0.01, 0),
+    //         150.0f,
+    //         Color(random_uniform(), random_uniform(), random_uniform(), 1)
+    //       ));
   };
 
   void timeStep(double delta_t);

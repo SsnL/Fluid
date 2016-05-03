@@ -4,6 +4,7 @@
 // STL
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <string>
@@ -13,6 +14,7 @@
 #include "CGL/CGL.h"
 #include "CGL/renderer.h"
 #include "CGL/osdtext.h"
+#include "CGL/tinyxml2.h"
 
 // COLLADA
 #include "collada/collada.h"
@@ -20,6 +22,7 @@
 #include "collada/sphere_info.h"
 #include "collada/polymesh_info.h"
 #include "collada/material_info.h"
+
 
 // MeshEdit
 #include "dynamic_scene/scene.h"
@@ -79,6 +82,7 @@ class Application : public Renderer {
 
   std::string name();
   std::string info();
+  Particles *particles = new Particles();
 
   void cursor_event( float x, float y );
   void scroll_event( float offset_x, float offset_y );
@@ -86,6 +90,8 @@ class Application : public Renderer {
   void keyboard_event( int key, int event, unsigned char mods  );
 
   void load(Collada::SceneInfo* sceneInfo);
+  Vector3D stov(std::string s);
+  void load_particles(const char* filename);
   void render_to_file(std::string filename) { 
     set_up_pathtracer();
     pathtracer->render_to_file(filename); 
@@ -146,6 +152,7 @@ class Application : public Renderer {
   void init_camera(Collada::CameraInfo& camera, const Matrix4x4& transform);
   DynamicScene::SceneLight *init_light(Collada::LightInfo& light, const Matrix4x4& transform);
   DynamicScene::SceneObject *init_sphere(Collada::SphereInfo& polymesh, const Matrix4x4& transform);
+  Particle *init_particle(Vector3D& pos, Vector3D& v, float r);
   DynamicScene::SceneObject *init_polymesh(Collada::PolymeshInfo& polymesh, const Matrix4x4& transform);
   void init_material(Collada::MaterialInfo& material);
 

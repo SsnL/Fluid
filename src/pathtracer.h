@@ -145,6 +145,9 @@ class PathTracer {
    */
   void save_glimage(std::string filename = "");
 
+  // Fluid simulation //
+  Particles *fluid_particles;
+
  private:
 
   /**
@@ -271,8 +274,7 @@ class PathTracer {
   std::vector<LoggedRay> rayLog;          ///< ray tracing log
   bool show_rays;                         ///< show rays from raylog
 
-  // Fluid simulation //
-  Particles *fluid_particles;
+
 };
 
 }  // namespace CGL

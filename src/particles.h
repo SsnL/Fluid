@@ -13,8 +13,6 @@ using namespace CGL::StaticScene;
 
 namespace CGL {
 
-struct Particles;
-
 class Particle {
  public:
   Vector3D velocity;
@@ -33,15 +31,15 @@ class Particle {
     velocity(v),
     rest_density(rest_density) { }
 
-  double getLatestDensityEstimate() {
+  inline double const getLatestDensityEstimate() {
     return density;
   }
 
-  inline Vector3D getPosition() {
+  inline const Vector3D getPosition() {
     return position;
   }
 
-  inline Vector3D getNewPosition() {
+  inline const Vector3D getNewPosition() {
     return new_position;
   }
 
@@ -105,20 +103,29 @@ struct Particles {
   double simulate_time;
 
   Particles() : bvh(NULL), simulate_time(0.0) {
-    // for (int i = -6; i < 6; i++)
-    //   for (int j = 0; j < 5; j++)
-    //     for (int k = -6; k < 6; k++)
-    //       ps.push_back(new Particle(
-    //         Vector3D(0.15 * i, 0.2 * j + 0.5, 0.15 * k),
-    //         Vector3D(0, -0.01, 0),
-    //         150.0f
-    //       ));
+    for (int i = 1; i < 10; i++)
+      for (int j = 1; j < 14; j++)
+        for (int k = 1; k < 10; k++)
+          ps.push_back(new Particle(
+            Vector3D(0.1 * i - 1, 0.1 * j, 1 - 0.1 * k),
+            Vector3D(0, -1, 0),
+            700.0f
+          ));
+    for (int i = 1; i < 10; i++)
+      for (int j = 1; j < 14; j++)
+        for (int k = 1; k < 10; k++)
+          ps.push_back(new Particle(
+            Vector3D(1 - 0.1 * i, 0.1 * j, 0.1 * k - 1),
+            Vector3D(0, -1, 0),
+            700.0f
+          ));
   };
 
   void timeStep(double delta_t);
   void timeStep();
   void redraw(const Color& c);
   string paramsString();
+  double estimateDensityAt(Vector3D pos);
 };
 
 } // namespace CGL

@@ -400,11 +400,22 @@ void PathTracer::key_press(int key) {
       }
       break;
   case 'm': case 'M':
-      // fluid_particles->redraw(Color(.5, .5, .5, .25));
-      fluid_particles->timeStep(0.01);
-      clear();
+      fluid_particles->timeStep();
       visualize_accel();
       fprintf(stdout, "[PathTracer] Fluid particles updated.\n");
+      break;
+  case 'g': case 'G':
+      fluid_simulate_to_time(fluid_particles->simulate_time + 1, true);
+      visualize_accel();
+      fprintf(stdout, "[PathTracer] Fluid particles updated, screenshots saved.\n");
+      break;
+  case 'c': case 'C':
+      fluid_simulate_to_time(fluid_particles->simulate_time + 1);
+      visualize_accel();
+      fprintf(stdout, "[PathTracer] Fluid particles updated.\n");
+      break;
+  case 's': case 'S':
+      save_glimage();
       break;
   case 'a':
   case 'A':
@@ -414,6 +425,29 @@ void PathTracer::key_press(int key) {
   }
 }
 
+bool PathTracer::fluid_simulate_to_time(double t, bool save_png) {
+  if (t <= fluid_particles->simulate_time) {
+    return false;
+  }
+  stringstream ss;
+  if (save_png) {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    visualize_accel();
+    ss << "screenshot_time_" << fluid_particles->simulate_time << ".png";
+    save_glimage();
+  }
+  while (fluid_particles->simulate_time < t) {
+    fluid_particles->timeStep();
+    if (save_png) {
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      visualize_accel();
+      ss.str(std::string());
+      ss << "screenshot_time_" << fluid_particles->simulate_time << ".png";
+      save_glimage();
+    }
+  }
+  return true;
+}
 
 
 
@@ -635,6 +669,43 @@ void PathTracer::save_image(string filename) {
   fprintf(stderr, "[PathTracer] Saving to file: %s... ", filename.c_str());
   lodepng::encode(filename, (unsigned char*) frame_out, w, h);
   fprintf(stderr, "Done!\n");
+}
+
+void PathTracer::save_glimage(string filename) {
+
+  if (state != READY && state != VISUALIZE) return;
+
+  if (filename == "") {
+    time_t rawtime;
+    time (&rawtime);
+
+    time_t t = time(nullptr);
+    tm *lt = localtime(&t);
+    stringstream ss;
+    ss << "screenshot_" << lt->tm_mon+1 << "-" << lt->tm_mday << "_"
+      << lt->tm_hour << "-" << lt->tm_min << "-" << lt->tm_sec << ".png";
+    filename = ss.str();
+  }
+
+  int width = sampleBuffer.w, height = sampleBuffer.h;
+  vector<unsigned char> windowPixels( 4*width*height );
+  glReadPixels(0, 0,
+              width,
+              height,
+              GL_RGBA,
+              GL_UNSIGNED_BYTE,
+              &windowPixels[0] );
+
+  vector<unsigned char> flippedPixels( 4*width*height );
+  for (int row = 0; row < height; ++row)
+    memcpy(&flippedPixels[row * width * 4], &windowPixels[(height - row - 1) * width * 4], 4*width);
+
+  stringstream ss;
+  fprintf(stderr, "[PathTracer] Saving to file: %s... ", filename.c_str());
+  if (lodepng::encode(filename, flippedPixels, width, height))
+    cerr << "Could not be written" << endl;
+  else
+    cout << "Success!" << endl;
 }
 
 }  // namespace CGL

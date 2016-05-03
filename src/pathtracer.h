@@ -140,6 +140,11 @@ class PathTracer {
    */
   void save_image(std::string filename = "");
 
+  /**
+   * Save OpenGL image, e.g. edit/visualization mode to png file.
+   */
+  void save_glimage(std::string filename = "");
+
  private:
 
   /**
@@ -193,6 +198,12 @@ class PathTracer {
    * Log a ray hit.
    */
   void log_ray_hit(const Ray& r, double hit_t);
+
+
+  /**
+   * Fluid simulation. Return True iff t > current time. Save png if needed.
+   */
+  bool fluid_simulate_to_time(double t, bool save_png = false);
 
   enum State {
     INIT,               ///< to be initialized

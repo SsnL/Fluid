@@ -72,7 +72,7 @@ namespace CGL {
   }
 
   // Set non-zero velocity response if collision
-  inline void clamp_response(Vector3D &p, Vector3D &v, double delta_t,, BVHAccel *bvh) {
+  inline void clamp_response(Vector3D &p, Vector3D &v, double delta_t, BVHAccel *bvh) {
     Vector3D delta_p = v * delta_t;
     double total_l = delta_p.norm(), l = total_l;
     if (l <= EPS_D) {

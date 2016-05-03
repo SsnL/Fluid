@@ -323,6 +323,7 @@ void Application::load_particles(const char* filename) {
     cout << "Loading particle file...";
   }
 
+  XMLElement* density = root->FirstChildElement("density");
   XMLElement* ps = root->FirstChildElement("ps");
   XMLElement* fs = root->FirstChildElement("fs");
 
@@ -331,8 +332,9 @@ void Application::load_particles(const char* filename) {
       Vector3D pos = stov(p->FirstChildElement("pos")->GetText());
       Vector3D v =  stov(p->FirstChildElement("v")->GetText());
       float r = stof(p->FirstChildElement("r")->GetText());
+      float d = stof(density->GetText());
       cout <<"pos:"<<pos<<" v:"<<v<<" r:"<<r<<endl;
-      particles->ps.push_back(init_particle(pos,v,r));
+      particles->ps.push_back(init_particle(pos,v,r,d));
       p = p->NextSiblingElement("particle");
   }
   pathtracer->fluid_particles = particles;
@@ -386,8 +388,8 @@ DynamicScene::SceneObject *Application::init_sphere(
 }
 
 Particle *Application::init_particle(
-    Vector3D& pos, Vector3D& v, float r) {
-   Particle* p = new Particle(new SphereObject(pos,r, NULL), v, 1.0);  
+    Vector3D& pos, Vector3D& v, float r, float d) {
+   Particle* p = new Particle(new SphereObject(pos,r, NULL), v, d);  
    return p;
 }
 

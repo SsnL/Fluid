@@ -81,7 +81,7 @@ namespace StaticScene {
 
 } // namespace StaticScene
 
-std::ostream& operator<<( std::ostream& os, const Particle& v );
+std::ostream &operator<<(std::ostream &os, const Particle &v);
 
 struct Force {
   virtual Vector3D getAccerlation(double t, Particle &p);
@@ -99,7 +99,6 @@ struct Particles {
   BVHAccel* bvh;
   double simulate_time;
 
-  // TODO: Also set PS, FS, and BVH
   Particles() : bvh(NULL), simulate_time(0.0) {
     // for (int i = -6; i < 6; i++)
     //   for (int j = 0; j < 5; j++)
@@ -115,6 +114,7 @@ struct Particles {
   void timeStep(double delta_t);
   void timeStep();
   void redraw(const Color& c);
+  string paramsString();
 };
 
 } // namespace CGL

@@ -1,6 +1,7 @@
+#include <sstream>
+
 #include "particles.h"
 #include "misc/sphere_drawing.h"
-#include "GL/glew.h"
 
 // params
 // artificial pressure denom
@@ -10,7 +11,7 @@
 // h^2, neighbor radius squared
 #define H2 0.25
 // max num neighbors
-#define MAX_NUM_NEIGHBORS 45
+// #define MAX_NUM_NEIGHBORS 45
 // should be 30~40 for SPH density est to be stable
 #define NUM_NEIGHBOR_ALERT_THRESHOLD 18
 // number of Newton steps
@@ -59,9 +60,9 @@ namespace CGL {
     } else {
       p += delta_p;
     }
-    p.x = std::max(-1.0 + EPS_D, std::min(1.0 - EPS_D, p.x));
-    p.y = std::max(0.0 + EPS_D, std::min(1.49 - EPS_D, p.y));
-    p.z = std::max(-1.0 + EPS_D, std::min(1.0 - EPS_D, p.z));
+    p.x = max(-1.0 + EPS_D, min(1.0 - EPS_D, p.x));
+    p.y = max(0.0 + EPS_D, min(1.49 - EPS_D, p.y));
+    p.z = max(-1.0 + EPS_D, min(1.0 - EPS_D, p.z));
   }
 
   inline double poly6_kernel(Vector3D r) {
@@ -226,12 +227,25 @@ namespace CGL {
     }
   }
 
+  string Particles::paramsString() {
+    stringstream ss;
+    ss << "Fluid simulation parameters: " << endl
+      << "\tH: " << H << endl
+      << "\tNewton steps: " << NEWTON_NUM_STEPS << endl
+      << "\tConstraint relaxation epsilon: " << EPSILON << endl
+      << "\tTensile artificial pressure coefficient K: " << K << endl
+      << "\tTensile artificial pressure exponent N: " << N << endl
+      << "\tVorticity confinement coefficient epsilon: " << VORTICITY_EPSILON << endl
+      << "\tViscosity coefficient C: " << C << endl;
+    return ss.str();
+  }
+
 }  // namespace CGL
 
 #undef DEFAULT_DELTA_T
 #undef H
 #undef H2
-#undef MAX_NUM_NEIGHBORS
+// #undef MAX_NUM_NEIGHBORS
 #undef NUM_NEIGHBOR_ALERT_THRESHOLD
 #undef NEWTON_NUM_STEPS
 #undef EPSILON

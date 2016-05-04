@@ -186,6 +186,8 @@ void PathTracer::start_visualizing() {
     return;
   }
   state = VISUALIZE;
+  // fluid sim params //
+  fprintf(stdout, "[Fluid Simulation] %s", fluid_particles->paramsString().c_str()); fflush(stdout);
 }
 
 void PathTracer::start_raytracing() {
@@ -235,8 +237,6 @@ void PathTracer::render_to_file(string filename) {
 
 
 void PathTracer::build_accel(bool includeSurface) {
-  // fluid sim params //
-  fprintf(stdout, "[Fluid Simulation] %s", fluid_particles->paramsString().c_str()); fflush(stdout);
 
   // collect primitives //
   fprintf(stdout, "[PathTracer] Collecting primitives... "); fflush(stdout);

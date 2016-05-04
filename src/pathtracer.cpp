@@ -191,6 +191,8 @@ void PathTracer::start_visualizing() {
 void PathTracer::start_raytracing() {
   if (state != READY) return;
 
+  build_accel(true);
+
   rayLog.clear();
   workQueue.clear();
 

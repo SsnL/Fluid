@@ -1,4 +1,6 @@
 #include "CGL/CGL.h"
+#include "CGL/Vector3D.h"
+#include <vector>
 
 namespace CGL{
 

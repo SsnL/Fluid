@@ -97,6 +97,11 @@ class Application : public Renderer {
     pathtracer->render_to_file(filename);
   }
 
+  void fluid_simulate_render_to_file(double delta_t) {
+    set_up_pathtracer();
+    pathtracer->fluid_simulate_render_time(delta_t);
+  }
+
  private:
 
   enum Mode {

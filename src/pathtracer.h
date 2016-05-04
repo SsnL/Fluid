@@ -145,6 +145,11 @@ class PathTracer {
    */
   void save_glimage(std::string filename = "");
 
+  /**
+   * Fluid simulation + marching cube rendering. Save png.
+   */
+  void fluid_simulate_render_time(double delta_t);
+
   // Fluid simulation //
   Particles *fluid_particles;
 
@@ -211,11 +216,6 @@ class PathTracer {
    * Fluid simulation one step.
    */
   void fluid_simulate_time_step();
-
-  /**
-   * Fluid simulation + marching cube rendering. Save png.
-   */
-  void fluid_simulate_render_time(double delta_t);
 
   /**
    * A png filename string with timestamp information.

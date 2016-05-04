@@ -11,11 +11,11 @@
 
 // marching cube
 // the threshold of isovalue for isosurface
-#define ISO_LEVEL_REST_DENSITY_RATIO 1.0
+#define ISO_LEVEL_REST_DENSITY_RATIO 0.95
 // gradient estimation epsilon
 #define GRADIENT_EPS 0.001
 // the resolution of isosurface
-#define FSTEPSIZE_RATIO 0.3
+#define FSTEPSIZE_RATIO 0.5
 
 // fluid simualation
 // velocity bounce factor
@@ -115,10 +115,10 @@ namespace CGL {
       p += (r.max_t - EPS_D) * d;
       // hack. redirect ONCE
       // if not perpendicular
-      if (1 - dot(d, i.n) > EPS_D && !intersect) { //TODO: INTERSECT = true case
-        i = Intersection();
+      if (dot(d, i.n) > -1 && !intersect) { //TODO: INTERSECT = true case
         d = (delta_p - dot(delta_p, i.n) * i.n).unit();
-        r = Ray(p, d, 0.0, (total_l - r.max_t));
+        r = Ray(p, d, 0.0, (total_l - r.max_t) * 0.5);
+        i = Intersection();
         bvh->intersect(r, &i);
         p += (r.max_t - EPS_D) * d;
       }
@@ -395,7 +395,7 @@ namespace CGL {
     }
     surface = getSurfacePrims(ISO_LEVEL_REST_DENSITY_RATIO * rest_density,
       H * FSTEPSIZE_RATIO,
-      new DiffuseBSDF(Spectrum(0.2, 0.2, 0.8)));
+      new DiffuseBSDF(Spectrum(0.1, 0.1, 0.8)));
       // new GlassBSDF(Spectrum(0.8,0.8,1), Spectrum(1,1,1), 0, 1.33));
     surfaceUpToTimestep = true;
   }
@@ -416,7 +416,6 @@ namespace CGL {
     }
     return n;
   }
-
 
   string Particles::paramsString() {
     stringstream ss;

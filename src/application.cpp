@@ -338,6 +338,7 @@ void Application::load_particles(const char* filename) {
       particles->addParticle(pos, v);
       p = p->NextSiblingElement("particle");
   }
+  particles->estimateDensities();
   cout << "Done!" << endl;
   pathtracer->fluid_particles = particles;
 }

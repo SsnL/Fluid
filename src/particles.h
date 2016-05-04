@@ -5,9 +5,12 @@
 #include <algorithm>
 
 #include "CGL/CGL.h"
+#include "bsdf.h"
 #include "static_scene/sphere.h"
 #include "bvh.h"
 #include "random_util.h"
+#include "dynamic_scene/mesh.h"
+#include "marching.h"
 
 using namespace CGL::StaticScene;
 
@@ -101,6 +104,8 @@ struct Particles {
   // std::vector<Force *> fs;
   BVHAccel* bvh;
   double simulate_time;
+  std::vector<Primitive *> surface;
+  bool surfaceUpToTimestep = false;
 
   Particles() : bvh(NULL), simulate_time(0.0) {
     for (int i = 1; i < 10; i++)
@@ -124,8 +129,17 @@ struct Particles {
   void timeStep(double delta_t);
   void timeStep();
   void redraw(const Color& c);
-  string paramsString();
   double estimateDensityAt(Vector3D pos);
+  void updateSurface();
+  Vector3D getVertexNormal(Vector3D &pos);
+  string paramsString();
+
+  GRIDCELL generate_gridcell(double x1, double x2, double y1, double y2, double z1, double z2);
+  double get_min(int axis);
+  double get_max(int axis);
+  void add_triangle_to_mesh(const DynamicScene::Mesh* mesh, Vector3D p0, Vector3D p1, Vector3D p2);
+  std::vector<Primitive *> getSurfacePrims(double isolevel, double fStepSize, BSDF* bsdf);
+  
 };
 
 } // namespace CGL

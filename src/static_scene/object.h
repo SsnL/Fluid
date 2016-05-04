@@ -20,6 +20,9 @@ class Mesh : public SceneObject {
    */
   Mesh(const HalfedgeMesh& mesh, BSDF* bsdf);
 
+  /* constructor used for particles */
+  Mesh();
+
   /**
    * Get all the primitives (Triangle) in the mesh.
    * Note that Triangle reference the mesh for the actual data.

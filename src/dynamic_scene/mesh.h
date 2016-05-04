@@ -38,6 +38,8 @@ class MeshFeature {
 class Mesh : public SceneObject, public MeshView {
  public:
 
+  Mesh();
+
   Mesh(Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform);
 
   ~Mesh();

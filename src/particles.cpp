@@ -2,10 +2,15 @@
 
 #include "particles.h"
 #include "misc/sphere_drawing.h"
+#include "static_scene/marching_triangle.h"
 
 // params
 // particle visualization radius
 #define VIS_RADIUS 0.05
+// the threshold of isovalue for isosurface
+#define ISO_LEVEL 0.8
+// the resolution of isosurface
+#define FSTEPSIZE 0.25
 // velocity bounce factor
 #define VELOCITY_BOUNCE_FACTOR 0.6
 // default time step
@@ -274,6 +279,7 @@ namespace CGL {
       p->updatePosition();
     }
     cout << ds / ps.size() << endl;
+    surfaceUpToTimestep = false;
   }
 
   void Particles::timeStep() {
@@ -285,6 +291,140 @@ namespace CGL {
       Misc::draw_sphere_opengl(p->getPosition(), VIS_RADIUS, p->getDensityBasedColor());
     }
   }
+
+  GRIDCELL Particles::generate_gridcell(double x1, double x2, double y1, double y2, double z1, double z2) {
+    GRIDCELL g;
+    g.p[0] = Vector3D(x1, y1, z1);
+    g.p[1] = Vector3D(x1, y2, z1);
+    g.p[2] = Vector3D(x2, y2, z1);
+    g.p[3] = Vector3D(x2, y1, z1);
+    g.p[4] = Vector3D(x1, y1, z2);
+    g.p[5] = Vector3D(x1, y2, z2);
+    g.p[6] = Vector3D(x2, y2, z2);
+    g.p[7] = Vector3D(x2, y1, z2);
+    for (int i = 0; i < 8; i++) {
+      g.val[i] = estimateDensityAt(g.p[i]);
+    }
+    return g;
+  }
+
+  /*     
+    hardcoded min and max coordinates of particels
+    x: [-1,1]
+    y: [0,1.5]
+    z: [-1,1]
+  */
+
+  double Particles::get_min(int axis){
+    switch(axis) {
+      case(0):return -1;
+      case(1):return 0;
+      case(2):return -1;
+      default: exit(-1);
+    }
+  }
+
+  double Particles::get_max(int axis){
+    switch(axis) {
+      case(0):return 1;
+      case(1):return 1.5;
+      case(2):return 1;
+      default: exit(-1);
+    }
+  }
+
+
+  // void Particles::new_triangle(const Mesh* mesh, Vector3D p1, Vector3D p2, Vector3D p3) {
+  //   size_t base = mesh->vertices.size();
+  //   mesh->vertices.push_back(v0);
+  //   mesh->vertices.push_back(v1);
+  //   mesh->vertices.push_back(v2);
+  //   Collada::Polygon poly;
+  //   poly.vertex_indices.push_back(base);
+  //   poly.vertex_indices.push_back(base + 1);
+  //   poly.vertex_indices.push_back(base + 2);
+  //   mesh->polygons.push_back(poly);
+  // }
+
+  // void Particles::remove_from_mesh(const Mesh* mesh, int vertices_base, int poly_base) {
+  //    int vertices_pops = mesh->vertices.size()-vertices_base;
+  //    int poly_pops = mesh->polygons.size()-vertices_base;
+  //    for (int i = 0; i < vertices_pops; i++) {
+  //     mesh->vertices.pop_back();
+  //    }
+  //    for (int i = 0; i < poly_pops; i++) {
+  //     mesh->polygons.pop_back();
+  //    }
+  // }
+
+  // void Particles::add_to_mesh(const Mesh* mesh, double fStepSize) {
+  std::vector<Primitive *> Particles::getSurfacePrims(double isolevel, double fStepSize, BSDF* bsdf) {
+    //, int &vertices_base, int &poly_base) {
+    std::vector<Primitive *> prims;
+    double xmin = get_min(0);
+    double ymin = get_min(1);
+    double zmin = get_min(2);
+    double xmax = get_max(0);
+    double ymax = get_max(1);
+    double zmax = get_max(2);
+    int xsteps = (int)((xmax-xmin)/fStepSize);
+    int ysteps = (int)((ymax-ymin)/fStepSize);
+    int zsteps = (int)((zmax-zmin)/fStepSize);
+    // vertices_base = mesh->vertices.size();
+    // poly_base = mesh->polygons.size();
+    
+    vector<vector<Index> > polygons;
+    vector<Vector3D> vertexPositions;
+    
+    for (int ix = 0; ix <= xsteps; ix++) 
+      for (int iy = 0; iy <= ysteps; iy++) 
+        for (int iz = 0; iz <= zsteps; iz++) {
+          double x1 = xmin+ix*fStepSize;
+          double x2 = x1+fStepSize;
+          double y1 = ymin+iy*fStepSize;
+          double y2 = y1+fStepSize;
+          double z1 = zmin+iz*fStepSize;
+          double z2 = z1+fStepSize;
+          GRIDCELL grid = generate_gridcell(x1,x2,y1,y2,z1,z2);
+          std::vector<TRIANGLE *> triangles = polygonise(grid, isolevel);
+          for (int i=0; i<triangles.size(); i++) {
+            Vector3D p1 = triangles[i]->p[0];
+            Vector3D p2 = triangles[i]->p[1];
+            Vector3D p3 = triangles[i]->p[2];
+            MarchingTriangle *tri = new MarchingTriangle(p1, p2, p3,
+                                        getVertexNormal(p1),
+                                        getVertexNormal(p2),
+                                        getVertexNormal(p3), bsdf);
+            prims.push_back(tri);
+            // add_triangle_to_mesh(mesh,p0,p1,p2);
+          }
+    }
+    return prims;
+  }
+
+  void Particles::updateSurface() {
+    if (surfaceUpToTimestep) {
+      return;
+    }
+    surface = getSurfacePrims(ISO_LEVEL, FSTEPSIZE, 
+      new DiffuseBSDF(Spectrum(0.1,0.1,0.8)));
+    surfaceUpToTimestep = true;
+  }
+
+
+  //vGetNormal() finds the gradient of the scalar field at a point
+  //This gradient can be used as a very accurate vertx normal for lighting calculations
+  Vector3D Particles::getVertexNormal(Vector3D &pos) {
+    double fX = pos[0];
+    double fY = pos[1];
+    double fZ = pos[2];
+    Vector3D n;
+    n.x = estimateDensityAt(Vector3D(fX-EPS_D, fY, fZ)) - estimateDensityAt(Vector3D(fX+EPS_D, fY, fZ));
+    n.y = estimateDensityAt(Vector3D(fX, fY-EPS_D, fZ)) - estimateDensityAt(Vector3D(fX, fY+EPS_D, fZ));
+    n.z = estimateDensityAt(Vector3D(fX, fY, fZ-EPS_D)) - estimateDensityAt(Vector3D(fX, fY, fZ+EPS_D));
+    return n.unit();
+  }
+
 
   string Particles::paramsString() {
     stringstream ss;
@@ -313,6 +453,8 @@ namespace CGL {
 }  // namespace CGL
 
 #undef VIS_RADIUS
+#undef ISO_LEVEL
+#undef FSTEPSIZE
 #undef VELOCITY_BOUNCE_FACTOR
 #undef DEFAULT_DELTA_T
 #undef H

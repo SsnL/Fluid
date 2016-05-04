@@ -18,6 +18,7 @@ set(APPLICATION_SOURCE
 
     # Static scene
     static_scene/sphere.cpp
+    static_scene/marching_triangle.cpp
     static_scene/triangle.cpp
     static_scene/object.cpp
     static_scene/environment_light.cpp

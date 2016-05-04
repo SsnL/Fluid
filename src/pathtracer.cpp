@@ -232,7 +232,7 @@ void PathTracer::render_to_file(string filename) {
 }
 
 
-void PathTracer::build_accel() {
+void PathTracer::build_accel(bool includeSurface) {
   // fluid sim params //
   fprintf(stdout, "[Fluid Simulation] %s", fluid_particles->paramsString().c_str()); fflush(stdout);
 
@@ -244,6 +244,11 @@ void PathTracer::build_accel() {
     const vector<Primitive *> &obj_prims = obj->get_primitives();
     primitives.reserve(primitives.size() + obj_prims.size());
     primitives.insert(primitives.end(), obj_prims.begin(), obj_prims.end());
+  }
+  if (includeSurface) {
+    fluid_particles->updateSurface();
+    primitives.reserve(primitives.size() + fluid_particles->surface.size());
+    primitives.insert(primitives.end(), fluid_particles->surface.begin(), fluid_particles->surface.end());
   }
   timer.stop();
   fprintf(stdout, "Done! (%.4f sec)\n", timer.duration());

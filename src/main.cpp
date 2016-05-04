@@ -19,7 +19,8 @@ using namespace CGL;
 void usage(const char* binaryName) {
   printf("Usage: %s [options] <scenefile>\n", binaryName);
   printf("Program Options:\n");
-  printf("  -p  <PATH>       Path to particle definition");
+  printf("  -p  <PATH>       Path to particle definition\n");
+  printf("  -d  <INT>        Simulation time of fluid rendered and saved as png files.\n");
   printf("  -s  <INT>        Number of camera rays per pixel\n");
   printf("  -l  <INT>        Number of samples per area light\n");
   printf("  -t  <INT>        Number of render threads\n");
@@ -75,10 +76,12 @@ int main( int argc, char** argv ) {
   // get the options
   AppConfig config; int opt;
   bool write_to_file = false;
+  bool simulate_render_to_file = false;
+  double simulate_time = 0.0;
   size_t w = 0, h = 0;
   string filename;
   string particle_path;
-  while ( (opt = getopt(argc, argv, "s:l:t:m:e:h:f:r:p:")) != -1 ) {  // for each option...
+  while ( (opt = getopt(argc, argv, "s:l:t:m:e:h:f:r:p:d:")) != -1 ) {  // for each option...
     switch ( opt ) {
     case 'f':
         write_to_file = true;
@@ -108,6 +111,10 @@ int main( int argc, char** argv ) {
         particle_path = string(optarg);
         msg(particle_path);
         break;
+    case 'd':
+        simulate_render_to_file = true;
+        simulate_time = (double) atoi(optarg);
+        break;
     default:
         usage(argv[0]);
         return 1;
@@ -132,7 +139,7 @@ int main( int argc, char** argv ) {
 
 
   // create application
-  Application *app  = new Application(config, !write_to_file);
+  Application *app  = new Application(config, !write_to_file && !simulate_render_to_file);
 
   // write straight to file without opening a window if -f option provided
   if (write_to_file) {
@@ -146,6 +153,20 @@ int main( int argc, char** argv ) {
       app->resize(w, h);
 
     app->render_to_file(filename); return 0;
+    return 0;
+  }
+
+  if (simulate_render_to_file) {
+    app->init();
+    app->load(sceneInfo);
+    // load particles
+    app->load_particles(particle_path.c_str());
+    delete sceneInfo;
+
+    if (w && h)
+      app->resize(w, h);
+
+    app->fluid_simulate_render_to_file(simulate_time); return 0;
     return 0;
   }
 

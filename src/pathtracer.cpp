@@ -186,8 +186,6 @@ void PathTracer::start_visualizing() {
     return;
   }
   state = VISUALIZE;
-  // fluid sim params //
-  fprintf(stdout, "[Fluid Simulation] %s", fluid_particles->paramsString().c_str()); fflush(stdout);
 }
 
 void PathTracer::start_raytracing() {
@@ -227,7 +225,6 @@ void PathTracer::start_raytracing() {
 }
 
 void PathTracer::render_to_file(string filename) {
-  cout << "RENDER" << endl;
   unique_lock<std::mutex> lk(m_done);
   start_raytracing();
   cv_done.wait(lk, [this]{ return state == DONE; });
@@ -480,7 +477,6 @@ void PathTracer::fluid_simulate_render_time(double delta_t) {
     stop();
     render_to_file(timestamp_based_png_file_name());
   }
-  start_visualizing();
 }
 
 

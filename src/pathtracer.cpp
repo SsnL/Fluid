@@ -251,6 +251,7 @@ void PathTracer::build_accel(bool includeSurface) {
     fluid_particles->updateSurface();
     primitives.reserve(primitives.size() + fluid_particles->surface.size());
     primitives.insert(primitives.end(), fluid_particles->surface.begin(), fluid_particles->surface.end());
+    surfaceNotErased = true;
   }
   timer.stop();
   fprintf(stdout, "Done! (%.4f sec)\n", timer.duration());
@@ -413,8 +414,13 @@ void PathTracer::key_press(int key) {
       visualize_accel();
       fprintf(stdout, "[Fluid Simulation] Fluid particles updated.\n");
       break;
+  case 'z': case 'Z':
+      if (surfaceNotErased) {
+        build_accel();
+      }
+      break;
   case 'g': case 'G':
-      fluid_simulate_to_time(fluid_particles->simulate_time + 2.5, true);
+      fluid_simulate_to_time(fluid_particles->simulate_time + 1, true);
       visualize_accel();
       fprintf(stdout, "[Fluid Simulation] Fluid particles updated, screenshots saved.\n");
       break;

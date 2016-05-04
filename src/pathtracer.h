@@ -273,6 +273,7 @@ class PathTracer {
   std::stack<BVHNode*> selectionHistory;  ///< node selection history
   std::vector<LoggedRay> rayLog;          ///< ray tracing log
   bool show_rays;                         ///< show rays from raylog
+  bool surfaceNotErased = false;                    /// If the surface is not erased from screen
 
 
 };

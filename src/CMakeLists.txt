@@ -35,7 +35,10 @@ set(APPLICATION_SOURCE
     camera.cpp
     sampler.cpp
     pathtracer.cpp
+
+    # Fluid simulation
     particles.cpp
+    marching.cpp
 
     # misc
     misc/sphere_drawing.cpp

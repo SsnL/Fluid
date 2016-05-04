@@ -8,9 +8,11 @@
 // particle visualization radius
 #define VIS_RADIUS 0.05
 // the threshold of isovalue for isosurface
-#define ISO_LEVEL 0.8
+#define ISO_LEVEL 700
 // the resolution of isosurface
-#define FSTEPSIZE 0.25
+#define GRADIENT_EPS 0.001
+// the resolution of isosurface
+#define FSTEPSIZE 0.18
 // velocity bounce factor
 #define VELOCITY_BOUNCE_FACTOR 0.6
 // default time step
@@ -366,16 +368,20 @@ namespace CGL {
           double y2 = y1+fStepSize;
           double z1 = zmin+iz*fStepSize;
           double z2 = z1+fStepSize;
+
           GRIDCELL grid = generate_gridcell(x1,x2,y1,y2,z1,z2);
           std::vector<TRIANGLE *> triangles = polygonise(grid, isolevel);
           for (int i=0; i<triangles.size(); i++) {
             Vector3D p1 = triangles[i]->p[0];
             Vector3D p2 = triangles[i]->p[1];
             Vector3D p3 = triangles[i]->p[2];
-            MarchingTriangle *tri = new MarchingTriangle(p1, p2, p3,
-                                        getVertexNormal(p1),
-                                        getVertexNormal(p2),
-                                        getVertexNormal(p3), bsdf);
+            Vector3D n1 = getVertexNormal(p1);
+            Vector3D n2 = getVertexNormal(p2);
+            Vector3D n3 = getVertexNormal(p3);
+
+            MarchingTriangle *tri = new MarchingTriangle(p1, p2, p3, n1, n2, n3, bsdf);
+            // cout << "p1:" << p1 << " p2:" << p2 << "p3:" << p3 << endl;
+            // cout << "n1:" << n1 << " n2:" << n2 << "n3:" << n3 << endl;
             prims.push_back(tri);
             // add_triangle_to_mesh(mesh,p0,p1,p2);
           }
@@ -387,7 +393,7 @@ namespace CGL {
     if (surfaceUpToTimestep) {
       return;
     }
-    surface = getSurfacePrims(ISO_LEVEL, FSTEPSIZE,
+    surface = getSurfacePrims(ISO_LEVEL, H * 0.5,
       new DiffuseBSDF(Spectrum(0.1,0.1,0.8)));
     surfaceUpToTimestep = true;
   }
@@ -400,10 +406,14 @@ namespace CGL {
     double fY = pos[1];
     double fZ = pos[2];
     Vector3D n;
-    n.x = estimateDensityAt(Vector3D(fX-EPS_D, fY, fZ)) - estimateDensityAt(Vector3D(fX+EPS_D, fY, fZ));
-    n.y = estimateDensityAt(Vector3D(fX, fY-EPS_D, fZ)) - estimateDensityAt(Vector3D(fX, fY+EPS_D, fZ));
-    n.z = estimateDensityAt(Vector3D(fX, fY, fZ-EPS_D)) - estimateDensityAt(Vector3D(fX, fY, fZ+EPS_D));
-    return n.unit();
+    n.x = estimateDensityAt(Vector3D(fX-GRADIENT_EPS, fY, fZ)) - estimateDensityAt(Vector3D(fX+GRADIENT_EPS, fY, fZ));
+    n.y = estimateDensityAt(Vector3D(fX, fY-GRADIENT_EPS, fZ)) - estimateDensityAt(Vector3D(fX, fY+GRADIENT_EPS, fZ));
+    n.z = estimateDensityAt(Vector3D(fX, fY, fZ-GRADIENT_EPS)) - estimateDensityAt(Vector3D(fX, fY, fZ+GRADIENT_EPS));
+    if (n.norm() > 0) {
+      // cout << "n:" << n << endl;
+      return n.unit();
+    }
+    return n;
   }
 
 
@@ -440,6 +450,7 @@ namespace CGL {
 
 #undef VIS_RADIUS
 #undef ISO_LEVEL
+#undef GRADIENT_EPS
 #undef FSTEPSIZE
 #undef VELOCITY_BOUNCE_FACTOR
 #undef DEFAULT_DELTA_T

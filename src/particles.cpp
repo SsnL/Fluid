@@ -150,6 +150,13 @@ namespace CGL {
     return os;
   }
 
+  void Particle::estimateDensityWithNeighbors(std::vector<Particle *> neighbors) {
+    density = 0.0;
+    for (Particle *n: neighbors) {
+      density += poly6_kernel(n->position - position);
+    }
+  }
+
   void Particle::initializeWithNewNeighbors() {
     s_corr.resize(neighbors.size());
     grad_w_neighbors.resize(neighbors.size());
@@ -310,7 +317,7 @@ namespace CGL {
     return g;
   }
 
-  /*     
+  /*
     hardcoded min and max coordinates of particels
     x: [-1,1]
     y: [0,1.5]
@@ -335,30 +342,6 @@ namespace CGL {
     }
   }
 
-
-  // void Particles::new_triangle(const Mesh* mesh, Vector3D p1, Vector3D p2, Vector3D p3) {
-  //   size_t base = mesh->vertices.size();
-  //   mesh->vertices.push_back(v0);
-  //   mesh->vertices.push_back(v1);
-  //   mesh->vertices.push_back(v2);
-  //   Collada::Polygon poly;
-  //   poly.vertex_indices.push_back(base);
-  //   poly.vertex_indices.push_back(base + 1);
-  //   poly.vertex_indices.push_back(base + 2);
-  //   mesh->polygons.push_back(poly);
-  // }
-
-  // void Particles::remove_from_mesh(const Mesh* mesh, int vertices_base, int poly_base) {
-  //    int vertices_pops = mesh->vertices.size()-vertices_base;
-  //    int poly_pops = mesh->polygons.size()-vertices_base;
-  //    for (int i = 0; i < vertices_pops; i++) {
-  //     mesh->vertices.pop_back();
-  //    }
-  //    for (int i = 0; i < poly_pops; i++) {
-  //     mesh->polygons.pop_back();
-  //    }
-  // }
-
   // void Particles::add_to_mesh(const Mesh* mesh, double fStepSize) {
   std::vector<Primitive *> Particles::getSurfacePrims(double isolevel, double fStepSize, BSDF* bsdf) {
     //, int &vertices_base, int &poly_base) {
@@ -372,14 +355,12 @@ namespace CGL {
     int xsteps = (int)((xmax-xmin)/fStepSize);
     int ysteps = (int)((ymax-ymin)/fStepSize);
     int zsteps = (int)((zmax-zmin)/fStepSize);
-    // vertices_base = mesh->vertices.size();
-    // poly_base = mesh->polygons.size();
-    
+
     vector<vector<Index> > polygons;
     vector<Vector3D> vertexPositions;
-    
-    for (int ix = 0; ix <= xsteps; ix++) 
-      for (int iy = 0; iy <= ysteps; iy++) 
+
+    for (int ix = 0; ix <= xsteps; ix++)
+      for (int iy = 0; iy <= ysteps; iy++)
         for (int iz = 0; iz <= zsteps; iz++) {
           double x1 = xmin+ix*fStepSize;
           double x2 = x1+fStepSize;
@@ -412,7 +393,7 @@ namespace CGL {
     if (surfaceUpToTimestep) {
       return;
     }
-    surface = getSurfacePrims(ISO_LEVEL, 0.15, 
+    surface = getSurfacePrims(ISO_LEVEL, H * 0.5,
       new DiffuseBSDF(Spectrum(0.1,0.1,0.8)));
     surfaceUpToTimestep = true;
   }
@@ -449,6 +430,12 @@ namespace CGL {
       << "\tParticle visualization radius: " << VIS_RADIUS << endl
       << "\tCollision response velocity factor: " << VELOCITY_BOUNCE_FACTOR << endl;
     return ss.str();
+  }
+
+  void Particles::estimateDensities() {
+    for (Particle *p : ps) {
+      p->estimateDensityWithNeighbors(ps);
+    }
   }
 
   double Particles::estimateDensityAt(Vector3D pos) {

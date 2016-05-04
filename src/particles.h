@@ -52,6 +52,9 @@ class Particle {
     return Color(1.0, 1.0 - clamp_ratio, 1.0 - clamp_ratio, 1.0);
   }
 
+  // given a set of neighbors, estimate density
+  void estimateDensityWithNeighbors(std::vector<Particle *> neighbors);
+
   void initializeWithNewNeighbors();
 
   // naive force and velocity
@@ -124,11 +127,13 @@ struct Particles {
             Vector3D(0, -1, 0),
             700.0f
           ));
+    estimateDensities();
   };
 
   void timeStep(double delta_t);
   void timeStep();
   void redraw(const Color& c);
+  void estimateDensities();
   double estimateDensityAt(Vector3D pos);
   void updateSurface();
   Vector3D getVertexNormal(Vector3D &pos);
@@ -139,7 +144,7 @@ struct Particles {
   double get_max(int axis);
   void add_triangle_to_mesh(const DynamicScene::Mesh* mesh, Vector3D p0, Vector3D p1, Vector3D p2);
   std::vector<Primitive *> getSurfacePrims(double isolevel, double fStepSize, BSDF* bsdf);
-  
+
 };
 
 } // namespace CGL

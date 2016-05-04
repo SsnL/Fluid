@@ -82,7 +82,7 @@ class Application : public Renderer {
 
   std::string name();
   std::string info();
-  Particles *particles = new Particles();
+  Particles *particles;
 
   void cursor_event( float x, float y );
   void scroll_event( float offset_x, float offset_y );

@@ -30,29 +30,35 @@ def add_particle(ps, pos, v):
 def build_tree(size, dis, density):
   particles = ET.Element("particles")
   # density = ET.SubElement(particles, "density").text = str(density)#rest density
-  density = ET.SubElement(particles, "density").text = str(150.0)#rest density
+  density = ET.SubElement(particles, "density").text = str(700.0)#rest density
   ps = ET.SubElement(particles, "ps")
 
-  #fs = ET.SubElement(particles, "fs")
-
-  # for i in range(1-size, size):
-  #   for j in range(0,size):
-  #     for k in range(1-size,size):
-  #       add_particle(ps, [dis*i,dis*j+0.5,dis*k], [0,0,0])
 
 
-    # for (int i = -6; i < 6; i++)
-    #   for (int j = 0; j < 5; j++)
-    #     for (int k = -6; k < 6; k++)
+    # for (int i = 1; i < 10; i++)
+    #   for (int j = 1; j < 14; j++)
+    #     for (int k = 1; k < 10; k++)
     #       ps.push_back(new Particle(
-    #         Vector3D(0.15 * i, 0.2 * j + 0.5, 0.15 * k),
-    #         Vector3D(0, -0.01, 0),
-    #         150.0f
+    #         Vector3D(0.1 * i - 1, 0.1 * j, 1 - 0.1 * k),
+    #         Vector3D(0, -1, 0),
+    #         700.0f
     #       ));
-  for i in range(-6, 6):
-    for j in range(0, 5):
-      for k in range(-6, 6):
-        add_particle(ps, [0.15 * i, 0.2 * j + 0.5, 0.15 * k], [0, -0.01, 0])
+    # for (int i = 1; i < 10; i++)
+    #   for (int j = 1; j < 14; j++)
+    #     for (int k = 1; k < 10; k++)
+    #       ps.push_back(new Particle(
+    #         Vector3D(1 - 0.1 * i, 0.1 * j, 0.1 * k - 1),
+    #         Vector3D(0, -1, 0),
+    #         700.0f
+    #       ));
+  for i in range(1, 10):
+    for j in range(1, 14):
+      for k in range(1, 10):
+        add_particle(ps, [0.1 * i - 1, 0.1 * j, 1 - 0.1 * k], [0, -1, 0])
+  for i in range(1, 10):
+    for j in range(1, 14):
+      for k in range(1, 10):
+        add_particle(ps, [1 - 0.1 * i, 0.1 * j, 0.1 * k - 1], [0, -1, 0])
 
   indent(particles)
   return ET.ElementTree(particles)

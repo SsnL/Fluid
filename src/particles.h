@@ -19,7 +19,6 @@ namespace CGL {
 class Particle {
  public:
   Vector3D velocity;
-  const double rest_density;
   std::vector<Particle *> neighbors; // changing during simulation
 
   static double tensile_instability_scale;
@@ -88,6 +87,7 @@ class Particle {
   Vector3D vorticity; // changing during simulation
   std::vector<double> s_corr; // changing during simulation, same order as neighbors
   std::vector<Vector3D> grad_w_neighbors; // changing during simulation, same order as neighbors
+  const double rest_density;
 };
 
 std::ostream &operator<<(std::ostream &os, const Particle &v);
@@ -107,43 +107,35 @@ struct Particles {
   // std::vector<Force *> fs;
   BVHAccel* bvh;
   double simulate_time;
+  const double rest_density;
   std::vector<Primitive *> surface;
   bool surfaceUpToTimestep = false;
 
-  Particles() : bvh(NULL), simulate_time(0.0) {
-    for (int i = 1; i < 10; i++)
-      for (int j = 1; j < 14; j++)
-        for (int k = 1; k < 10; k++)
-          ps.push_back(new Particle(
-            Vector3D(0.1 * i - 1, 0.1 * j, 1 - 0.1 * k),
-            Vector3D(0, -1, 0),
-            700.0f
-          ));
-    for (int i = 1; i < 10; i++)
-      for (int j = 1; j < 14; j++)
-        for (int k = 1; k < 10; k++)
-          ps.push_back(new Particle(
-            Vector3D(1 - 0.1 * i, 0.1 * j, 0.1 * k - 1),
-            Vector3D(0, -1, 0),
-            700.0f
-          ));
+  Particles(double rest_density = 1000.0) : bvh(NULL), rest_density(rest_density), simulate_time(0.0) {
     estimateDensities();
   };
 
+  void addParticle(Vector3D pos, Vector3D v) {
+    ps.push_back(new Particle(pos, v, rest_density));
+  }
+
+  // fluid simulation
   void timeStep(double delta_t);
   void timeStep();
-  void redraw(const Color& c);
   void estimateDensities();
   double estimateDensityAt(Vector3D pos);
+
+  // marching cube
   void updateSurface();
   Vector3D getVertexNormal(Vector3D &pos);
-  string paramsString();
-
-  GRIDCELL generate_gridcell(double x1, double x2, double y1, double y2, double z1, double z2);
-  double get_min(int axis);
-  double get_max(int axis);
-  void add_triangle_to_mesh(const DynamicScene::Mesh* mesh, Vector3D p0, Vector3D p1, Vector3D p2);
+  GridCell generateGridCell(double x1, double x2, double y1, double y2, double z1, double z2);
+  double getParticlesAxisMin(int axis);
+  double getParticlesAxisMax(int axis);
   std::vector<Primitive *> getSurfacePrims(double isolevel, double fStepSize, BSDF* bsdf);
+
+  // utils
+  string paramsString();
+  void redraw(const Color& c);
 
 };
 

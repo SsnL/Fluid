@@ -5,17 +5,19 @@
 
 // params
 // particle visualization radius
-#define VIS_RADIUS 0.02
+#define VIS_RADIUS 0.05
 // the threshold of isovalue for isosurface
 #define ISO_LEVEL 0.8
 // the resolution of isosurface
 #define FSTEPSIZE 0.25
+// velocity bounce factor
+#define VELOCITY_BOUNCE_FACTOR 0.6
 // default time step
 #define DEFAULT_DELTA_T 0.016
 // used in SPH density estimation
-#define H 0.5
+#define H 0.3
 // h^2, neighbor radius squared
-#define H2 0.25
+#define H2 0.09
 // max num neighbors
 // #define MAX_NUM_NEIGHBORS 45
 // should be 30~40 for SPH density est to be stable
@@ -23,15 +25,19 @@
 // number of Newton steps
 #define NEWTON_NUM_STEPS 12
 // used in calculating lambda
-#define EPSILON 5
+#define EPSILON 2
 // artificial pressure coeff
-#define K 0.001
+#define K 0.0001
 // artificial pressure exp
 #define N 4
 // vorticity
-#define VORTICITY_EPSILON 0.01
+#define VORTICITY_EPSILON 0.001
 // XSPH viscocity
-#define C 0.0001
+#define C 0.001
+// num cells along axis
+// #define CELL_NUM_X 8
+// #define CELL_NUM_Y 6
+// #define CELL_NUM_Z 8
 
 namespace CGL {
   inline void clamp(Vector3D &p, Vector3D delta_p, BVHAccel *bvh) {
@@ -50,7 +56,7 @@ namespace CGL {
       }
     }
     // light is at y = 1.49.
-    // to avoid particles stuck between light and ceiling, clip it
+    // to avoid particles being stuck between light and ceiling, clip it
     if (d.y != 0.0) {
       double pt = (1.49 - p.y) / d.y;
       if (pt > 0.0 && pt < l) {
@@ -61,6 +67,54 @@ namespace CGL {
     Ray r(p, d, 0.0, l);
     if (bvh->intersect(r) || intersect) {
       p += (r.max_t  - EPS_D) * d;
+    } else {
+      p += delta_p;
+    }
+    p.x = max(-1.0 + EPS_D, min(1.0 - EPS_D, p.x));
+    p.y = max(0.0 + EPS_D, min(1.49 - EPS_D, p.y));
+    p.z = max(-1.0 + EPS_D, min(1.0 - EPS_D, p.z));
+  }
+
+  // Set non-zero velocity response if collision
+  inline void clamp_response(Vector3D &p, Vector3D &v, double delta_t, BVHAccel *bvh) {
+    Vector3D delta_p = v * delta_t;
+    double total_l = delta_p.norm(), l = total_l;
+    if (l <= EPS_D) {
+      return;
+    }
+    Vector3D d = delta_p / l;
+    // Viewing from plane x = -1.0, clip it as well
+    bool intersect = false;
+    if (d.z != 0.0) {
+      double pt = (1.0 - p.z) / d.z;
+      if (pt > 0.0 && pt < l) {
+        l = pt;
+        intersect = true;
+      }
+    }
+    // light is at y = 1.49.
+    // to avoid particles being stuck between light and ceiling, clip it
+    if (d.y != 0.0) {
+      double pt = (1.49 - p.y) / d.y;
+      if (pt > 0.0 && pt < l) {
+        l = pt;
+        intersect = true;
+      }
+    }
+    Ray r(p, d, 0.0, l);
+    Intersection i;
+    if (bvh->intersect(r, &i) || intersect) {
+      p += (r.max_t - EPS_D) * d;
+      // hack. redirect ONCE
+      // if not perpendicular
+      if (1 - dot(d, i.n) > EPS_D && !intersect) { //TODO: INTERSECT = true case
+        i = Intersection();
+        d = (delta_p - dot(delta_p, i.n) * i.n).unit();
+        r = Ray(p, d, 0.0, (total_l - r.max_t));
+        bvh->intersect(r, &i);
+        p += (r.max_t - EPS_D) * d;
+      }
+
     } else {
       p += delta_p;
     }
@@ -108,9 +162,9 @@ namespace CGL {
     //   velocity += delta_t * f->getAccerlation(particles->simulate_time, *this);
     // }
     // assume only gravity for now
-    velocity.y -= 9.8 * delta_t;
+    velocity.y -= 10 * delta_t;
     new_position = position;
-    clamp(new_position, velocity * delta_t, bvh);
+    clamp_response(new_position, velocity, delta_t, bvh);
   }
 
   void Particle::newtonStepCalculateLambda() {
@@ -169,7 +223,9 @@ namespace CGL {
     for (size_t i = 0; i < neighbors.size(); i++) {
       grad_vorticity += neighbors[i]->vorticity.norm() * grad_w_neighbors[i];
     }
-    velocity += delta_t * VORTICITY_EPSILON * cross(grad_vorticity.unit(), vorticity);
+    if (grad_vorticity.norm() > EPS_D) {
+      velocity += delta_t * VORTICITY_EPSILON * cross(grad_vorticity.unit(), vorticity);
+    }
   }
 
   void Particle::updatePosition() {
@@ -387,8 +443,17 @@ namespace CGL {
       << "\tTensile artificial pressure exponent N: " << N << endl
       << "\tVorticity confinement coefficient epsilon: " << VORTICITY_EPSILON << endl
       << "\tViscosity coefficient C: " << C << endl
-      << "\tParticle visualization radius: " << VIS_RADIUS << endl;
+      << "\tParticle visualization radius: " << VIS_RADIUS << endl
+      << "\tCollision response velocity factor: " << VELOCITY_BOUNCE_FACTOR << endl;
     return ss.str();
+  }
+
+  double Particles::estimateDensityAt(Vector3D pos) {
+    double density = 0.0;
+    for (Particle *p : ps) {
+        density += poly6_kernel(p->getPosition() - pos);
+    }
+    return density;
   }
 
 }  // namespace CGL
@@ -396,7 +461,7 @@ namespace CGL {
 #undef VIS_RADIUS
 #undef ISO_LEVEL
 #undef FSTEPSIZE
-
+#undef VELOCITY_BOUNCE_FACTOR
 #undef DEFAULT_DELTA_T
 #undef H
 #undef H2
@@ -408,5 +473,8 @@ namespace CGL {
 #undef N
 #undef VORTICITY_EPSILON
 #undef C
+// #undef CELL_NUM_X
+// #undef CELL_NUM_Y
+// #undef CELL_NUM_Z
 
 

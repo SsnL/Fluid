@@ -307,22 +307,22 @@ void PathTracer::visualize_accel() const {
   tstack.push(bvh->get_root());
 
   // draw all BVH bboxes with non-highlighted color
-  while (!tstack.empty()) {
+  // while (!tstack.empty()) {
 
-    BVHNode *current = tstack.top();
-    tstack.pop();
+  //   BVHNode *current = tstack.top();
+  //   tstack.pop();
 
-    current->bb.draw(cnode);
-    if (current->l) tstack.push(current->l);
-    if (current->r) tstack.push(current->r);
-  }
+  //   current->bb.draw(cnode);
+  //   if (current->l) tstack.push(current->l);
+  //   if (current->r) tstack.push(current->r);
+  // }
 
   // draw selected node bbox and primitives
-  if (selected->l) selected->l->bb.draw(cnode_hl_child);
-  if (selected->r) selected->r->bb.draw(cnode_hl_child);
+  // if (selected->l) selected->l->bb.draw(cnode_hl_child);
+  // if (selected->r) selected->r->bb.draw(cnode_hl_child);
 
   glLineWidth(3.f);
-  selected->bb.draw(cnode_hl);
+  // selected->bb.draw(cnode_hl);
 
   // now perform visualization of the rays
   if (show_rays) {
@@ -407,7 +407,7 @@ void PathTracer::key_press(int key) {
       fprintf(stdout, "[Fluid Simulation] Fluid particles updated.\n");
       break;
   case 'g': case 'G':
-      fluid_simulate_to_time(fluid_particles->simulate_time + 1, true);
+      fluid_simulate_to_time(fluid_particles->simulate_time + 2.5, true);
       visualize_accel();
       fprintf(stdout, "[Fluid Simulation] Fluid particles updated, screenshots saved.\n");
       break;

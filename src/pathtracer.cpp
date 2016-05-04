@@ -227,6 +227,7 @@ void PathTracer::start_raytracing() {
 }
 
 void PathTracer::render_to_file(string filename) {
+  cout << "RENDER" << endl;
   unique_lock<std::mutex> lk(m_done);
   start_raytracing();
   cv_done.wait(lk, [this]{ return state == DONE; });
@@ -249,10 +250,14 @@ void PathTracer::build_accel(bool includeSurface) {
   }
   if (includeSurface) {
     fluid_particles->updateSurface();
+    fprintf(stdout, "including %lu marching cube surfacing triangles... ", fluid_particles->surface.size()); fflush(stdout);
     primitives.reserve(primitives.size() + fluid_particles->surface.size());
     primitives.insert(primitives.end(), fluid_particles->surface.begin(), fluid_particles->surface.end());
-    surfaceNotErased = true;
+    bvh_has_surface = true;
+  } else {
+    bvh_has_surface = false;
   }
+  cout << bvh_has_surface << ' ';
   timer.stop();
   fprintf(stdout, "Done! (%.4f sec)\n", timer.duration());
 
@@ -410,60 +415,73 @@ void PathTracer::key_press(int key) {
       }
       break;
   case 'm': case 'M':
-      fluid_particles->timeStep();
+      fluid_simulate_time_step();
       visualize_accel();
       fprintf(stdout, "[Fluid Simulation] Fluid particles updated.\n");
       break;
-  case 'z': case 'Z':
-      if (surfaceNotErased) {
-        build_accel();
-      }
-      break;
   case 'g': case 'G':
-      fluid_simulate_to_time(fluid_particles->simulate_time + 1, true);
+      fluid_simulate_time(1, true);
       visualize_accel();
       fprintf(stdout, "[Fluid Simulation] Fluid particles updated, screenshots saved.\n");
       break;
   case 'c': case 'C':
-      fluid_simulate_to_time(fluid_particles->simulate_time + 1);
+      fluid_simulate_time(1);
       visualize_accel();
       fprintf(stdout, "[Fluid Simulation] Fluid particles updated.\n");
+      break;
+  case 'h': case 'H': // wonder happens here
+      fluid_simulate_render_time(1);
+      visualize_accel();
+      fprintf(stdout, "[Fluid Simulation] Fluid particles updated, screenshots saved.\n");
       break;
   case 's': case 'S':
       save_glimage();
       break;
-  case 'a':
-  case 'A':
+  case 'a': case 'A':
       show_rays = !show_rays;
   default:
       return;
   }
 }
 
-bool PathTracer::fluid_simulate_to_time(double t, bool save_png) {
-  if (t <= fluid_particles->simulate_time) {
-    return false;
+void PathTracer::fluid_simulate_time(double delta_t, bool save_png) {
+  if (bvh_has_surface) {
+    build_accel();
   }
-  stringstream ss;
+  double start_t = fluid_particles->simulate_time;
   if (save_png) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     visualize_accel();
-    ss << "screenshot_time_" << fluid_particles->simulate_time << ".png";
     save_glimage();
   }
-  while (fluid_particles->simulate_time < t) {
+  while (fluid_particles->simulate_time < start_t + delta_t) {
     fluid_particles->timeStep();
     if (save_png) {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       visualize_accel();
-      ss.str(std::string());
-      ss << "screenshot_time_" << fluid_particles->simulate_time << ".png";
       save_glimage();
     }
   }
-  return true;
 }
 
+void PathTracer::fluid_simulate_time_step() {
+  if (bvh_has_surface) {
+    build_accel();
+  }
+  fluid_particles->timeStep();
+}
+
+void PathTracer::fluid_simulate_render_time(double delta_t) {
+  double start_t = fluid_particles->simulate_time;
+  stop();
+  render_to_file(timestamp_based_png_file_name());
+  while (fluid_particles->simulate_time < start_t + delta_t) {
+    fluid_simulate_time_step();
+    stop();
+    render_to_file(timestamp_based_png_file_name());
+  }
+  start_visualizing();
+}
 
 
 Spectrum PathTracer::estimate_direct_lighting(const Ray& r, const Intersection& isect) {
@@ -661,15 +679,7 @@ void PathTracer::save_image(string filename) {
   if (state != DONE) return;
 
   if (filename == "") {
-    time_t rawtime;
-    time (&rawtime);
-
-    time_t t = time(nullptr);
-    tm *lt = localtime(&t);
-    stringstream ss;
-    ss << "screenshot_" << lt->tm_mon+1 << "-" << lt->tm_mday << "_"
-      << lt->tm_hour << "-" << lt->tm_min << "-" << lt->tm_sec << ".png";
-    filename = ss.str();
+    filename = timestamp_based_png_file_name();
   }
 
 
@@ -691,15 +701,7 @@ void PathTracer::save_glimage(string filename) {
   if (state != READY && state != VISUALIZE) return;
 
   if (filename == "") {
-    time_t rawtime;
-    time (&rawtime);
-
-    time_t t = time(nullptr);
-    tm *lt = localtime(&t);
-    stringstream ss;
-    ss << "screenshot_" << lt->tm_mon+1 << "-" << lt->tm_mday << "_"
-      << lt->tm_hour << "-" << lt->tm_min << "-" << lt->tm_sec << ".png";
-    filename = ss.str();
+    filename = timestamp_based_png_file_name();
   }
 
   int width = sampleBuffer.w, height = sampleBuffer.h;
@@ -721,6 +723,18 @@ void PathTracer::save_glimage(string filename) {
     cerr << "Could not be written" << endl;
   else
     cout << "Success!" << endl;
+}
+
+string PathTracer::timestamp_based_png_file_name() {
+  time_t rawtime;
+  time (&rawtime);
+
+  time_t t = time(nullptr);
+  tm *lt = localtime(&t);
+  stringstream ss;
+  ss << "screenshot_" << lt->tm_mon+1 << "-" << lt->tm_mday << "_"
+    << lt->tm_hour << "-" << lt->tm_min << "-" << lt->tm_sec << ".png";
+  return ss.str();
 }
 
 }  // namespace CGL

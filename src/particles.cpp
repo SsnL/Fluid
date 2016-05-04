@@ -5,14 +5,19 @@
 #include "static_scene/marching_triangle.h"
 
 // params
+
 // particle visualization radius
 #define VIS_RADIUS 0.05
+
+// marching cube
 // the threshold of isovalue for isosurface
-#define ISO_LEVEL 700
-// the resolution of isosurface
+#define ISO_LEVEL_REST_DENSITY_RATIO 1.0
+// gradient estimation epsilon
 #define GRADIENT_EPS 0.001
 // the resolution of isosurface
-#define FSTEPSIZE 0.18
+#define FSTEPSIZE_RATIO 0.3
+
+// fluid simualation
 // velocity bounce factor
 #define VELOCITY_BOUNCE_FACTOR 0.6
 // default time step
@@ -301,8 +306,8 @@ namespace CGL {
     }
   }
 
-  GRIDCELL Particles::generate_gridcell(double x1, double x2, double y1, double y2, double z1, double z2) {
-    GRIDCELL g;
+  GridCell Particles::generateGridCell(double x1, double x2, double y1, double y2, double z1, double z2) {
+    GridCell g;
     g.p[0] = Vector3D(x1, y1, z1);
     g.p[1] = Vector3D(x1, y2, z1);
     g.p[2] = Vector3D(x2, y2, z1);
@@ -318,13 +323,13 @@ namespace CGL {
   }
 
   /*
-    hardcoded min and max coordinates of particels
+    hardcoded min and max coordinates of particles
     x: [-1,1]
     y: [0,1.5]
     z: [-1,1]
   */
 
-  double Particles::get_min(int axis){
+  double Particles::getParticlesAxisMin(int axis){
     switch(axis) {
       case(0):return -1;
       case(1):return 0;
@@ -333,7 +338,7 @@ namespace CGL {
     }
   }
 
-  double Particles::get_max(int axis){
+  double Particles::getParticlesAxisMax(int axis){
     switch(axis) {
       case(0):return 1;
       case(1):return 1.5;
@@ -342,16 +347,14 @@ namespace CGL {
     }
   }
 
-  // void Particles::add_to_mesh(const Mesh* mesh, double fStepSize) {
   std::vector<Primitive *> Particles::getSurfacePrims(double isolevel, double fStepSize, BSDF* bsdf) {
-    //, int &vertices_base, int &poly_base) {
     std::vector<Primitive *> prims;
-    double xmin = get_min(0);
-    double ymin = get_min(1);
-    double zmin = get_min(2);
-    double xmax = get_max(0);
-    double ymax = get_max(1);
-    double zmax = get_max(2);
+    double xmin = getParticlesAxisMin(0);
+    double ymin = getParticlesAxisMin(1);
+    double zmin = getParticlesAxisMin(2);
+    double xmax = getParticlesAxisMax(0);
+    double ymax = getParticlesAxisMax(1);
+    double zmax = getParticlesAxisMax(2);
     int xsteps = (int)((xmax-xmin)/fStepSize);
     int ysteps = (int)((ymax-ymin)/fStepSize);
     int zsteps = (int)((zmax-zmin)/fStepSize);
@@ -363,14 +366,14 @@ namespace CGL {
       for (int iy = 0; iy <= ysteps; iy++)
         for (int iz = 0; iz <= zsteps; iz++) {
           double x1 = xmin+ix*fStepSize;
-          double x2 = x1+fStepSize;
+          double x2 = std::min(xmax, x1+fStepSize);
           double y1 = ymin+iy*fStepSize;
-          double y2 = y1+fStepSize;
+          double y2 = std::min(ymax, y1+fStepSize);
           double z1 = zmin+iz*fStepSize;
-          double z2 = z1+fStepSize;
+          double z2 = std::min(zmax, z1+fStepSize);
 
-          GRIDCELL grid = generate_gridcell(x1,x2,y1,y2,z1,z2);
-          std::vector<TRIANGLE *> triangles = polygonise(grid, isolevel);
+          GridCell grid = generateGridCell(x1,x2,y1,y2,z1,z2);
+          std::vector<TriangleVertices *> triangles = polygonise(grid, isolevel);
           for (int i=0; i<triangles.size(); i++) {
             Vector3D p1 = triangles[i]->p[0];
             Vector3D p2 = triangles[i]->p[1];
@@ -380,10 +383,7 @@ namespace CGL {
             Vector3D n3 = getVertexNormal(p3);
 
             MarchingTriangle *tri = new MarchingTriangle(p1, p2, p3, n1, n2, n3, bsdf);
-            // cout << "p1:" << p1 << " p2:" << p2 << "p3:" << p3 << endl;
-            // cout << "n1:" << n1 << " n2:" << n2 << "n3:" << n3 << endl;
             prims.push_back(tri);
-            // add_triangle_to_mesh(mesh,p0,p1,p2);
           }
     }
     return prims;
@@ -393,8 +393,10 @@ namespace CGL {
     if (surfaceUpToTimestep) {
       return;
     }
-    surface = getSurfacePrims(ISO_LEVEL, H * 0.5,
-      new GlassBSDF(Spectrum(1,1,1), Spectrum(1,1,1), 0, 1.45));
+    surface = getSurfacePrims(ISO_LEVEL_REST_DENSITY_RATIO * rest_density,
+      H * FSTEPSIZE_RATIO,
+      new DiffuseBSDF(Spectrum(0.2, 0.2, 0.8)));
+      // new GlassBSDF(Spectrum(0.8,0.8,1), Spectrum(1,1,1), 0, 1.33));
     surfaceUpToTimestep = true;
   }
 
@@ -410,7 +412,6 @@ namespace CGL {
     n.y = estimateDensityAt(Vector3D(fX, fY-GRADIENT_EPS, fZ)) - estimateDensityAt(Vector3D(fX, fY+GRADIENT_EPS, fZ));
     n.z = estimateDensityAt(Vector3D(fX, fY, fZ-GRADIENT_EPS)) - estimateDensityAt(Vector3D(fX, fY, fZ+GRADIENT_EPS));
     if (n.norm() > 0) {
-      // cout << "n:" << n << endl;
       return n.unit();
     }
     return n;
@@ -420,7 +421,8 @@ namespace CGL {
   string Particles::paramsString() {
     stringstream ss;
     ss << "Fluid simulation parameters: " << endl
-      << "\tH: " << H << endl
+      << "\tTime step: " << DEFAULT_DELTA_T << endl
+      << "\tSPH Density estimate radius H: " << H << endl
       << "\tNewton steps: " << NEWTON_NUM_STEPS << endl
       << "\tConstraint relaxation epsilon: " << EPSILON << endl
       << "\tTensile artificial pressure coefficient K: " << K << endl
@@ -428,7 +430,11 @@ namespace CGL {
       << "\tVorticity confinement coefficient epsilon: " << VORTICITY_EPSILON << endl
       << "\tViscosity coefficient C: " << C << endl
       << "\tParticle visualization radius: " << VIS_RADIUS << endl
-      << "\tCollision response velocity factor: " << VELOCITY_BOUNCE_FACTOR << endl;
+      << "\tCollision response velocity factor: " << VELOCITY_BOUNCE_FACTOR << endl
+      << "Marching cube parameters: " << endl
+      << "\tIso-level / rest density ratio: " << ISO_LEVEL_REST_DENSITY_RATIO << endl
+      << "\tGradient estimateion epsilon: " << GRADIENT_EPS << endl
+      << "\tStepsize / H ratio: " << FSTEPSIZE_RATIO << endl;
     return ss.str();
   }
 
@@ -449,9 +455,11 @@ namespace CGL {
 }  // namespace CGL
 
 #undef VIS_RADIUS
-#undef ISO_LEVEL
+
+#undef ISO_LEVEL_REST_DENSITY_RATIO
 #undef GRADIENT_EPS
-#undef FSTEPSIZE
+#undef FSTEPSIZE_RATIO
+
 #undef VELOCITY_BOUNCE_FACTOR
 #undef DEFAULT_DELTA_T
 #undef H

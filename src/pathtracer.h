@@ -202,11 +202,25 @@ class PathTracer {
    */
   void log_ray_hit(const Ray& r, double hit_t);
 
+  /**
+   * Fluid simulation. Save png if needed.
+   */
+  void fluid_simulate_time(double delta_t, bool save_png = false);
 
   /**
-   * Fluid simulation. Return True iff t > current time. Save png if needed.
+   * Fluid simulation one step.
    */
-  bool fluid_simulate_to_time(double t, bool save_png = false);
+  void fluid_simulate_time_step();
+
+  /**
+   * Fluid simulation + marching cube rendering. Save png.
+   */
+  void fluid_simulate_render_time(double delta_t);
+
+  /**
+   * A png filename string with timestamp information.
+   */
+  string timestamp_based_png_file_name();
 
   enum State {
     INIT,               ///< to be initialized
@@ -273,8 +287,7 @@ class PathTracer {
   std::stack<BVHNode*> selectionHistory;  ///< node selection history
   std::vector<LoggedRay> rayLog;          ///< ray tracing log
   bool show_rays;                         ///< show rays from raylog
-  bool surfaceNotErased = false;                    /// If the surface is not erased from screen
-
+  bool bvh_has_surface = false;           ///< if bvh contains fluid surface
 
 };
 

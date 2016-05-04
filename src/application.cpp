@@ -328,12 +328,14 @@ void Application::load_particles(const char* filename) {
   XMLElement* ps = root->FirstChildElement("ps");
   XMLElement* fs = root->FirstChildElement("fs");
 
+  float d = stof(density->GetText());
+  particles = new Particles(d);
+
   XMLElement* p = ps->FirstChildElement("particle");
   while (p) {
       Vector3D pos = stov(p->FirstChildElement("pos")->GetText());
       Vector3D v =  stov(p->FirstChildElement("v")->GetText());
-      float d = stof(density->GetText());
-      particles->ps.push_back(new Particle(pos,v,d));
+      particles->addParticle(pos, v);
       p = p->NextSiblingElement("particle");
   }
   cout << "Done!" << endl;

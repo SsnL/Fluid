@@ -394,7 +394,7 @@ namespace CGL {
       return;
     }
     surface = getSurfacePrims(ISO_LEVEL, H * 0.5,
-      new DiffuseBSDF(Spectrum(0.1,0.1,0.8)));
+      new GlassBSDF(Spectrum(1,1,1), Spectrum(1,1,1), 0, 1.45));
     surfaceUpToTimestep = true;
   }
 

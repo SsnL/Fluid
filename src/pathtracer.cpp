@@ -233,6 +233,8 @@ void PathTracer::render_to_file(string filename) {
 
 
 void PathTracer::build_accel() {
+  // fluid sim params //
+  fprintf(stdout, "[Fluid Simulation] %s", fluid_particles->paramsString().c_str()); fflush(stdout);
 
   // collect primitives //
   fprintf(stdout, "[PathTracer] Collecting primitives... "); fflush(stdout);
@@ -402,17 +404,17 @@ void PathTracer::key_press(int key) {
   case 'm': case 'M':
       fluid_particles->timeStep();
       visualize_accel();
-      fprintf(stdout, "[PathTracer] Fluid particles updated.\n");
+      fprintf(stdout, "[Fluid Simulation] Fluid particles updated.\n");
       break;
   case 'g': case 'G':
       fluid_simulate_to_time(fluid_particles->simulate_time + 1, true);
       visualize_accel();
-      fprintf(stdout, "[PathTracer] Fluid particles updated, screenshots saved.\n");
+      fprintf(stdout, "[Fluid Simulation] Fluid particles updated, screenshots saved.\n");
       break;
   case 'c': case 'C':
       fluid_simulate_to_time(fluid_particles->simulate_time + 1);
       visualize_accel();
-      fprintf(stdout, "[PathTracer] Fluid particles updated.\n");
+      fprintf(stdout, "[Fluid Simulation] Fluid particles updated.\n");
       break;
   case 's': case 'S':
       save_glimage();

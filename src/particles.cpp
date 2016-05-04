@@ -1,17 +1,23 @@
+#include <sstream>
+
 #include "particles.h"
 #include "misc/sphere_drawing.h"
-#include "GL/glew.h"
-#include "marching.cpp"
 
 // params
-// artificial pressure denom
+// particle visualization radius
+#define VIS_RADIUS 0.02
+// the threshold of isovalue for isosurface
+#define ISO_LEVEL 0.8
+// the resolution of isosurface
+#define FSTEPSIZE 0.25
+// default time step
 #define DEFAULT_DELTA_T 0.016
 // used in SPH density estimation
 #define H 0.5
 // h^2, neighbor radius squared
 #define H2 0.25
 // max num neighbors
-#define MAX_NUM_NEIGHBORS 45
+// #define MAX_NUM_NEIGHBORS 45
 // should be 30~40 for SPH density est to be stable
 #define NUM_NEIGHBOR_ALERT_THRESHOLD 18
 // number of Newton steps
@@ -26,8 +32,6 @@
 #define VORTICITY_EPSILON 0.01
 // XSPH viscocity
 #define C 0.0001
-
-using namespace CGL::StaticScene;
 
 namespace CGL {
   inline void clamp(Vector3D &p, Vector3D delta_p, BVHAccel *bvh) {
@@ -60,9 +64,9 @@ namespace CGL {
     } else {
       p += delta_p;
     }
-    p.x = std::max(-1.0 + EPS_D, std::min(1.0 - EPS_D, p.x));
-    p.y = std::max(0.0 + EPS_D, std::min(1.49 - EPS_D, p.y));
-    p.z = std::max(-1.0 + EPS_D, std::min(1.0 - EPS_D, p.z));
+    p.x = max(-1.0 + EPS_D, min(1.0 - EPS_D, p.x));
+    p.y = max(0.0 + EPS_D, min(1.49 - EPS_D, p.y));
+    p.z = max(-1.0 + EPS_D, min(1.0 - EPS_D, p.z));
   }
 
   inline double poly6_kernel(Vector3D r) {
@@ -85,7 +89,7 @@ namespace CGL {
   double Particle::tensile_instability_scale = 1.0 / poly6_kernel(Vector3D(0, 0, 0.1 * H));
 
   std::ostream& operator<<( std::ostream& os, Particle& v ) {
-    os << "P(p" << v.newOrigin() << ",v" << v.velocity << ')';
+    os << "P(p" << v.getNewPosition() << ",v" << v.velocity << ')';
     return os;
   }
 
@@ -105,8 +109,8 @@ namespace CGL {
     // }
     // assume only gravity for now
     velocity.y -= 9.8 * delta_t;
-    new_origin = origin();
-    clamp(new_origin, velocity * delta_t, bvh);
+    new_position = position;
+    clamp(new_position, velocity * delta_t, bvh);
   }
 
   void Particle::newtonStepCalculateLambda() {
@@ -114,7 +118,7 @@ namespace CGL {
     double denom = 0.0;
     Vector3D grad_i_c_i;
     for (size_t i = 0; i < neighbors.size(); i++) {
-      Vector3D r = new_origin - neighbors[i]->new_origin;
+      Vector3D r = new_position - neighbors[i]->new_position;
       double w_i_n = poly6_kernel(r);
       Vector3D grad_w_i_n = grad_spiky_kernel(r);
       // SPH density esitmator
@@ -136,23 +140,26 @@ namespace CGL {
       delta_p += (lambda + neighbors[i]->lambda + s_corr[i]) * grad_w_neighbors[i];
     }
     delta_p /= rest_density;
-    clamp(new_origin, delta_p, bvh);
+    clamp(new_position, delta_p, bvh);
   }
 
   void Particle::updateVelocity(double delta_t) {
-    velocity = (new_origin - origin()) / delta_t;
+    velocity = (new_position - position) / delta_t;
   }
 
   void Particle::calculateVorticityApplyXSPHViscosity() {
     vorticity = Vector3D();
     Vector3D viscocity;
+    density = 0.0;
     for (size_t i = 0; i < neighbors.size(); i++) {
       Vector3D v_i_n = neighbors[i]->velocity - velocity;
-      Vector3D r = new_origin - neighbors[i]->new_origin;
+      Vector3D r = new_position - neighbors[i]->new_position;
       Vector3D grad_w_i_n = grad_spiky_kernel(r);
       vorticity += cross(v_i_n, grad_w_i_n);
-      viscocity += v_i_n * poly6_kernel(r);
+      double w_i_n = poly6_kernel(r);
+      viscocity += v_i_n * w_i_n;
       grad_w_neighbors[i] = grad_w_i_n;
+      density += w_i_n;
     }
     velocity += C * viscocity;
   }
@@ -166,7 +173,7 @@ namespace CGL {
   }
 
   void Particle::updatePosition() {
-    origin() = new_origin;
+    position = new_position;
   }
 
   void Particles::timeStep(double delta_t) {
@@ -179,7 +186,7 @@ namespace CGL {
     }
     for (size_t i = 0; i < ps.size(); i++) {
       for (size_t j = i + 1; j < ps.size(); j++) {
-        if ((ps[i]->newOrigin() - ps[j]->newOrigin()).norm2() <= H2) {
+        if ((ps[i]->getNewPosition() - ps[j]->getNewPosition()).norm2() <= H2) {
           ps[i]->neighbors.push_back(ps[j]);
           ps[j]->neighbors.push_back(ps[i]);
         }
@@ -215,6 +222,7 @@ namespace CGL {
       p->updatePosition();
     }
     cout << ds / ps.size() << endl;
+    meshUpToTimestep = false;
   }
 
   void Particles::timeStep() {
@@ -223,12 +231,28 @@ namespace CGL {
 
   void Particles::redraw(const Color& c) {
     for (Particle *p : ps) {
-      Misc::draw_sphere_opengl(p->origin(), p->radius(), p->color);
+      Misc::draw_sphere_opengl(p->getPosition(), VIS_RADIUS, p->getDensityBasedColor());
     }
   }
 
-  GRIDCELL generate_gridcell(float x1, float x2, float y1, float y2, float z1, float z2) {
+  double Particles::estimateDensityAt(Vector3D pos) {
+    return 0;
+  }
 
+  GRIDCELL Particles::generate_gridcell(float x1, float x2, float y1, float y2, float z1, float z2) {
+    GRIDCELL g;
+    g.p[0] = Vector3D(x1, y1, z1);
+    g.p[1] = Vector3D(x1, y2, z1);
+    g.p[2] = Vector3D(x2, y2, z1);
+    g.p[3] = Vector3D(x2, y1, z1);
+    g.p[4] = Vector3D(x1, y1, z2);
+    g.p[5] = Vector3D(x1, y2, z2);
+    g.p[6] = Vector3D(x2, y2, z2);
+    g.p[7] = Vector3D(x2, y1, z2);
+    for (int i = 0; i < 8; i++) {
+      g.val[i] = estimateDensityAt(g.p[i]);
+    }
+    return g;
   }
 
   /*     
@@ -241,8 +265,9 @@ namespace CGL {
   double Particles::get_min(int axis){
     switch(axis) {
       case(0):return -1;
-      case(1):return -0;
+      case(1):return 0;
       case(2):return -1;
+      default: exit(-1);
     }
   }
 
@@ -251,24 +276,41 @@ namespace CGL {
       case(0):return 1;
       case(1):return 1.5;
       case(2):return 1;
+      default: exit(-1);
     }
   }
 
 
-  void Particles::add_triangle_to_mesh(const Mesh* mesh, XYZ p0, XYZ p1, XYZ p2) {
+  void Particles::add_triangle(const vector<vector<Index> >& polygons,
+                               const vector<Vector3D>& vertexPositions,
+                               Vector3D p0, Vector3D p1, Vector3D p2) {
 
      size_t base = mesh->vertices.size();
      mesh->vertices.push_back(v0);
      mesh->vertices.push_back(v1);
      mesh->vertices.push_back(v2);
-     Polygon poly;
+     Collada::Polygon poly;
      poly.vertex_indices.push_back(base);
      poly.vertex_indices.push_back(base + 1);
      poly.vertex_indices.push_back(base + 2);
      mesh->polygons.push_back(poly);
   }
 
-  vector<Primitive *> Particles::add_to_mesh(const Mesh* mesh, float fStepSize) {
+  // void Particles::remove_from_mesh(const Mesh* mesh, int vertices_base, int poly_base) {
+  //    int vertices_pops = mesh->vertices.size()-vertices_base;
+  //    int poly_pops = mesh->polygons.size()-vertices_base;
+  //    for (int i = 0; i < vertices_pops; i++) {
+  //     mesh->vertices.pop_back();
+  //    }
+  //    for (int i = 0; i < poly_pops; i++) {
+  //     mesh->polygons.pop_back();
+  //    }
+  // }
+
+  // void Particles::add_to_mesh(const Mesh* mesh, float fStepSize) {
+  DynamicScene::Mesh* Particles::get_mesh(float fStepSize) {
+    //, int &vertices_base, int &poly_base) {
+    DynamicScene::Mesh *mesh = new DynamicScene::Mesh();
     double isolevel; // the threshold isolevel
     float xmin = get_min(0);
     float ymin = get_min(1);
@@ -279,31 +321,86 @@ namespace CGL {
     int xsteps = (int)((xmax-xmin)/fStepSize);
     int ysteps = (int)((ymax-ymin)/fStepSize);
     int zsteps = (int)((zmax-zmin)/fStepSize);
+    // vertices_base = mesh->vertices.size();
+    // poly_base = mesh->polygons.size();
     
-    vector<Primitives *> prims;
+    vector<vector<Index> > polygons;
+    vector<Vector3D> vertexPositions;
     
     for (int ix = 0; ix <= xsteps; ix++) 
       for (int iy = 0; iy <= ysteps; iy++) 
-       for (int iz = 0; iz <= zsteps; iz++) {
-         GRIDCELL grid = generate_gridcell();
-         TRIANGLE *triangles = TRIANGLE[16];
-         
-         int ntriangles = Polygonize(grid, isolevel, triangles);
-         vMarchCube(ix*fStepSize, iy*fStepSize, iz*fStepSize, fStepSize); 
-         for (int i=0; i<ntriangles; i++) {
-           Vector3D p0 = triangles[i][0];
-           Vector3D p1 = triangles[i][1];
-           Vector3D p2 = triangles[i][2];
-           add_triangle_to_mesh(mesh,p0,p1,p2);
-         }
+        for (int iz = 0; iz <= zsteps; iz++) {
+          float x1 = xmin+ix*fStepSize;
+          float x2 = x1+fStepSize;
+          float y1 = ymin+iy*fStepSize;
+          float y2 = y1+fStepSize;
+          float z1 = zmin+iz*fStepSize;
+          float z2 = z1+fStepSize;
+          GRIDCELL grid = generate_gridcell(x1,x2,y1,y2,z1,z2);
+          TRIANGLE *triangles = TRIANGLE[16]; 
+          int ntriangles = Polygonise(grid, isolevel, triangles);
+          for (int i=0; i<ntriangles; i++) {
+            Vector3D p0 = triangles[i][0];
+            Vector3D p1 = triangles[i][1];
+            Vector3D p2 = triangles[i][2];
+            add_triangle_to_mesh(mesh,p0,p1,p2);
+          }
     }
+    return mesh;
   }
+
+  DynamicScene::Mesh *updateMesh() {
+    if (meshUpToTimestep) {
+      return mesh;
+    }
+    // int vertices_base, poly_base;
+    // mesh = new Mesh();
+    // add_to_mesh(mesh, FSTEPSIZE, vertices_base, poly_base);
+    mesh = get_mesh(FSTEPSIZE);
+    meshUpToTimestep = true;
+    return mesh;
+  }
+
+
+  //vGetNormal() finds the gradient of the scalar field at a point
+  //This gradient can be used as a very accurate vertx normal for lighting calculations
+  Vector3D Particles::vGetNormal(Vector3D &pos)
+  {
+    double fX = pos[0];
+    double fY = pos[1];
+    double fZ = pos[2];
+    Vector3D n;
+    n.x = estimateDensityAt(Vector3D(fX-EPS_D, fY, fZ)) - estimateDensityAt(Vector3D(fX+EPS_D, fY, fZ));
+    n.y = estimateDensityAt(Vector3D(fX, fY-EPS_D, fZ)) - estimateDensityAt(Vector3D(fX, fY+EPS_D, fZ));
+    n.z = estimateDensityAt(Vector3D(fX, fY, fZ-EPS_D)) - estimateDensityAt(Vector3D(fX, fY, fZ+EPS_D));
+    return n.unit();
+  }
+
+
+  string Particles::paramsString() {
+    stringstream ss;
+    ss << "Fluid simulation parameters: " << endl
+      << "\tH: " << H << endl
+      << "\tNewton steps: " << NEWTON_NUM_STEPS << endl
+      << "\tConstraint relaxation epsilon: " << EPSILON << endl
+      << "\tTensile artificial pressure coefficient K: " << K << endl
+      << "\tTensile artificial pressure exponent N: " << N << endl
+      << "\tVorticity confinement coefficient epsilon: " << VORTICITY_EPSILON << endl
+      << "\tViscosity coefficient C: " << C << endl
+      << "\tParticle visualization radius: " << VIS_RADIUS << endl;
+    return ss.str();
+  }
+
 }  // namespace CGL
+
+#undef VIS_RADIUS
+#undef ISO_LEVEL
+#undef FSTEPSIZE
 
 #undef DEFAULT_DELTA_T
 #undef H
 #undef H2
-#undef MAX_NUM_NEIGHBORS
+// #undef MAX_NUM_NEIGHBORS
 #undef NUM_NEIGHBOR_ALERT_THRESHOLD
 #undef NEWTON_NUM_STEPS
 #undef EPSILON

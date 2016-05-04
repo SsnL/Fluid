@@ -1,15 +1,7 @@
 /*
 Source: http://paulbourke.net/geometry/polygonise/
 */
-
-typedef struct {
-   Vector3D p[3];
-} TRIANGLE;
-
-typedef struct {
-   Vector3D p[8];
-   double val[8];
-} GRIDCELL;
+#include "marching.h"
 
 /*
    Given a grid cell and an isolevel, calculate the triangular
@@ -388,10 +380,7 @@ int triTable[256][16] =
    Linearly interpolate the position where an isosurface cuts
    an edge between two vertices, each with their own scalar value
 */
-Vector3D VertexInterp(isolevel,p1,p2,valp1,valp2)
-double isolevel;
-Vector3D p1,p2;
-double valp1,valp2;
+Vector3D VertexInterp(double isolevel,Vector3D p1, Vector3D p2,double valp1, double valp2)
 {
    double mu;
    Vector3D p;

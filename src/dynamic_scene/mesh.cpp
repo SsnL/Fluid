@@ -34,6 +34,10 @@ Mesh::Mesh(Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform) {
   }
 }
 
+Mesh::Mesh() {
+    this->bsdf = new DiffuseBSDF(Spectrum(0.1,0.1,0.8));
+  }
+
 void Mesh::render_in_opengl() const {
 
   // TODO: fix drawing with BSDF

@@ -216,7 +216,7 @@ void Application::load(SceneInfo* sceneInfo) {
   vector<Collada::Node>& nodes = sceneInfo->nodes;
   vector<DynamicScene::SceneLight *> lights;
   vector<DynamicScene::SceneObject *> objects;
-  
+
 
   // save camera position to update camera control later
   CameraInfo *c;
@@ -298,6 +298,7 @@ Vector3D Application::stov(string s) {
   ss >> z;
   return Vector3D(x,y,z);
 }
+
 void Application::load_particles(const char* filename) {
     std::ifstream ifs (filename, std::ifstream::in);
   if (!ifs.is_open()) {
@@ -320,7 +321,7 @@ void Application::load_particles(const char* filename) {
   if (!root) {
     cout << "[ERROR] Not a particles file!";
   } else {
-    cout << "Loading particle file...";
+    cout << "[Fluid Simulation] Loading particle file...";
   }
 
   XMLElement* density = root->FirstChildElement("density");
@@ -331,12 +332,11 @@ void Application::load_particles(const char* filename) {
   while (p) {
       Vector3D pos = stov(p->FirstChildElement("pos")->GetText());
       Vector3D v =  stov(p->FirstChildElement("v")->GetText());
-      float r = stof(p->FirstChildElement("r")->GetText());
       float d = stof(density->GetText());
-      cout <<"pos:"<<pos<<" v:"<<v<<" r:"<<r<<endl;
-      particles->ps.push_back(init_particle(pos,v,r,d));
+      particles->ps.push_back(new Particle(pos,v,d));
       p = p->NextSiblingElement("particle");
   }
+  cout << "Done!" << endl;
   pathtracer->fluid_particles = particles;
 }
 
@@ -385,12 +385,6 @@ DynamicScene::SceneObject *Application::init_sphere(
   const Vector3D& position = (transform * Vector4D(0, 0, 0, 1)).projectTo3D();
   double scale = (transform * Vector4D(1, 0, 0, 0)).to3D().norm();
   return new DynamicScene::Sphere(sphere, position, scale);
-}
-
-Particle *Application::init_particle(
-    Vector3D& pos, Vector3D& v, float r, float d) {
-   Particle* p = new Particle(new SphereObject(pos,r, NULL), v, d);  
-   return p;
 }
 
 DynamicScene::SceneObject *Application::init_polymesh(

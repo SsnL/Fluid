@@ -57,6 +57,8 @@ vector<Primitive*> Mesh::get_primitives() const {
   return primitives;
 }
 
+
+
 BSDF* Mesh::get_bsdf() const {
   return bsdf;
 }

@@ -2,6 +2,7 @@
 
 #include "particles.h"
 #include "misc/sphere_drawing.h"
+#include "static_scene/marching_triangle.h"
 
 // params
 // particle visualization radius
@@ -278,7 +279,7 @@ namespace CGL {
       p->updatePosition();
     }
     cout << ds / ps.size() << endl;
-    meshUpToTimestep = false;
+    surfaceUpToTimestep = false;
   }
 
   void Particles::timeStep() {
@@ -291,11 +292,7 @@ namespace CGL {
     }
   }
 
-  double Particles::estimateDensityAt(Vector3D pos) {
-    return 0;
-  }
-
-  GRIDCELL Particles::generate_gridcell(float x1, float x2, float y1, float y2, float z1, float z2) {
+  GRIDCELL Particles::generate_gridcell(double x1, double x2, double y1, double y2, double z1, double z2) {
     GRIDCELL g;
     g.p[0] = Vector3D(x1, y1, z1);
     g.p[1] = Vector3D(x1, y2, z1);
@@ -337,20 +334,17 @@ namespace CGL {
   }
 
 
-  void Particles::add_triangle(const vector<vector<Index> >& polygons,
-                               const vector<Vector3D>& vertexPositions,
-                               Vector3D p0, Vector3D p1, Vector3D p2) {
-
-     size_t base = mesh->vertices.size();
-     mesh->vertices.push_back(v0);
-     mesh->vertices.push_back(v1);
-     mesh->vertices.push_back(v2);
-     Collada::Polygon poly;
-     poly.vertex_indices.push_back(base);
-     poly.vertex_indices.push_back(base + 1);
-     poly.vertex_indices.push_back(base + 2);
-     mesh->polygons.push_back(poly);
-  }
+  // void Particles::new_triangle(const Mesh* mesh, Vector3D p1, Vector3D p2, Vector3D p3) {
+  //   size_t base = mesh->vertices.size();
+  //   mesh->vertices.push_back(v0);
+  //   mesh->vertices.push_back(v1);
+  //   mesh->vertices.push_back(v2);
+  //   Collada::Polygon poly;
+  //   poly.vertex_indices.push_back(base);
+  //   poly.vertex_indices.push_back(base + 1);
+  //   poly.vertex_indices.push_back(base + 2);
+  //   mesh->polygons.push_back(poly);
+  // }
 
   // void Particles::remove_from_mesh(const Mesh* mesh, int vertices_base, int poly_base) {
   //    int vertices_pops = mesh->vertices.size()-vertices_base;
@@ -363,17 +357,16 @@ namespace CGL {
   //    }
   // }
 
-  // void Particles::add_to_mesh(const Mesh* mesh, float fStepSize) {
-  DynamicScene::Mesh* Particles::get_mesh(float fStepSize) {
+  // void Particles::add_to_mesh(const Mesh* mesh, double fStepSize) {
+  std::vector<Primitive *> Particles::getSurfacePrims(double isolevel, double fStepSize, BSDF* bsdf) {
     //, int &vertices_base, int &poly_base) {
-    DynamicScene::Mesh *mesh = new DynamicScene::Mesh();
-    double isolevel; // the threshold isolevel
-    float xmin = get_min(0);
-    float ymin = get_min(1);
-    float zmin = get_min(2);
-    float xmax = get_max(0);
-    float ymax = get_max(1);
-    float zmax = get_max(2);
+    std::vector<Primitive *> prims;
+    double xmin = get_min(0);
+    double ymin = get_min(1);
+    double zmin = get_min(2);
+    double xmax = get_max(0);
+    double ymax = get_max(1);
+    double zmax = get_max(2);
     int xsteps = (int)((xmax-xmin)/fStepSize);
     int ysteps = (int)((ymax-ymin)/fStepSize);
     int zsteps = (int)((zmax-zmin)/fStepSize);
@@ -386,42 +379,42 @@ namespace CGL {
     for (int ix = 0; ix <= xsteps; ix++) 
       for (int iy = 0; iy <= ysteps; iy++) 
         for (int iz = 0; iz <= zsteps; iz++) {
-          float x1 = xmin+ix*fStepSize;
-          float x2 = x1+fStepSize;
-          float y1 = ymin+iy*fStepSize;
-          float y2 = y1+fStepSize;
-          float z1 = zmin+iz*fStepSize;
-          float z2 = z1+fStepSize;
+          double x1 = xmin+ix*fStepSize;
+          double x2 = x1+fStepSize;
+          double y1 = ymin+iy*fStepSize;
+          double y2 = y1+fStepSize;
+          double z1 = zmin+iz*fStepSize;
+          double z2 = z1+fStepSize;
           GRIDCELL grid = generate_gridcell(x1,x2,y1,y2,z1,z2);
-          TRIANGLE *triangles = TRIANGLE[16]; 
-          int ntriangles = Polygonise(grid, isolevel, triangles);
-          for (int i=0; i<ntriangles; i++) {
-            Vector3D p0 = triangles[i][0];
-            Vector3D p1 = triangles[i][1];
-            Vector3D p2 = triangles[i][2];
-            add_triangle_to_mesh(mesh,p0,p1,p2);
+          std::vector<TRIANGLE *> triangles = polygonise(grid, isolevel);
+          for (int i=0; i<triangles.size(); i++) {
+            Vector3D p1 = triangles[i]->p[0];
+            Vector3D p2 = triangles[i]->p[1];
+            Vector3D p3 = triangles[i]->p[2];
+            MarchingTriangle *tri = new MarchingTriangle(p1, p2, p3,
+                                        getVertexNormal(p1),
+                                        getVertexNormal(p2),
+                                        getVertexNormal(p3), bsdf);
+            prims.push_back(tri);
+            // add_triangle_to_mesh(mesh,p0,p1,p2);
           }
     }
-    return mesh;
+    return prims;
   }
 
-  DynamicScene::Mesh *updateMesh() {
-    if (meshUpToTimestep) {
-      return mesh;
+  void Particles::updateSurface() {
+    if (surfaceUpToTimestep) {
+      return;
     }
-    // int vertices_base, poly_base;
-    // mesh = new Mesh();
-    // add_to_mesh(mesh, FSTEPSIZE, vertices_base, poly_base);
-    mesh = get_mesh(FSTEPSIZE);
-    meshUpToTimestep = true;
-    return mesh;
+    surface = getSurfacePrims(ISO_LEVEL, FSTEPSIZE, 
+      new DiffuseBSDF(Spectrum(0.1,0.1,0.8)));
+    surfaceUpToTimestep = true;
   }
 
 
   //vGetNormal() finds the gradient of the scalar field at a point
   //This gradient can be used as a very accurate vertx normal for lighting calculations
-  Vector3D Particles::vGetNormal(Vector3D &pos)
-  {
+  Vector3D Particles::getVertexNormal(Vector3D &pos) {
     double fX = pos[0];
     double fY = pos[1];
     double fZ = pos[2];

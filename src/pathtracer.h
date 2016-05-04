@@ -158,7 +158,7 @@ class PathTracer {
   /**
    * Build acceleration structures.
    */
-  void build_accel();
+  void build_accel(bool includeSurface = false);
 
   /**
    * Visualize acceleration structures.

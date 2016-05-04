@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "CGL/CGL.h"
+#include "bsdf.h"
 #include "static_scene/sphere.h"
 #include "bvh.h"
 #include "random_util.h"
@@ -103,8 +104,8 @@ struct Particles {
   // std::vector<Force *> fs;
   BVHAccel* bvh;
   double simulate_time;
-  DynamicScene::Mesh* mesh = new DynamicScene::Mesh();
-  bool meshUpToTimestep = false;
+  std::vector<Primitive *> surface;
+  bool surfaceUpToTimestep = false;
 
   Particles() : bvh(NULL), simulate_time(0.0) {
     for (int i = 1; i < 10; i++)
@@ -129,15 +130,15 @@ struct Particles {
   void timeStep();
   void redraw(const Color& c);
   double estimateDensityAt(Vector3D pos);
-  DynamicScene::Mesh *updateMesh();
-  Vector3D vGetNormal(Vector3D &pos);
+  void updateSurface();
+  Vector3D getVertexNormal(Vector3D &pos);
   string paramsString();
 
-  GRIDCELL generate_gridcell(float x1, float x2, float y1, float y2, float z1, float z2);
+  GRIDCELL generate_gridcell(double x1, double x2, double y1, double y2, double z1, double z2);
   double get_min(int axis);
   double get_max(int axis);
   void add_triangle_to_mesh(const DynamicScene::Mesh* mesh, Vector3D p0, Vector3D p1, Vector3D p2);
-  DynamicScene::Mesh* get_mesh(float fStepSize);
+  std::vector<Primitive *> getSurfacePrims(double isolevel, double fStepSize, BSDF* bsdf);
   
 };
 

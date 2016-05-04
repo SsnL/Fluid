@@ -1,15 +1,17 @@
+#include "CGL/CGL.h"
 
 namespace CGL{
-typedef struct {
-   Vector3D p[3];
-} TRIANGLE;
 
-typedef struct {
+struct TRIANGLE {
+   Vector3D p[3];
+};
+
+struct GRIDCELL {
    Vector3D p[8];
    double val[8];
-} GRIDCELL;
+};
 
-int Polygonise(GRIDCELL grid,double isolevel,TRIANGLE *triangles);
+std::vector<TRIANGLE *> polygonise(GRIDCELL grid,double isolevel);
 Vector3D VertexInterp(double isolevel,Vector3D p1,Vector3D p2, double valp1, double valp2);
 
-}// namespace CGL
+} // namespace CGL

@@ -3,6 +3,8 @@ Source: http://paulbourke.net/geometry/polygonise/
 */
 #include "marching.h"
 
+namespace CGL {
+
 /*
    Given a grid cell and an isolevel, calculate the triangular
    facets required to represent the isosurface through the cell.
@@ -11,11 +13,12 @@ Source: http://paulbourke.net/geometry/polygonise/
     0 will be returned if the grid cell is either totally above
    of totally below the isolevel.
 */
-int Polygonise(GRIDCELL grid,double isolevel,TRIANGLE *triangles)
+std::vector<TRIANGLE *> polygonise(GRIDCELL grid, double isolevel)
 {
-   int i,ntriang;
+   int i;
    int cubeindex;
    Vector3D vertlist[12];
+   std::vector<TRIANGLE *> triangles;
 
 int edgeTable[256]={
 0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
@@ -367,13 +370,14 @@ int triTable[256][16] =
    /* Create the triangle */
    ntriang = 0;
    for (i=0;triTable[cubeindex][i]!=-1;i+=3) {
-      triangles[ntriang].p[0] = vertlist[triTable[cubeindex][i  ]];
-      triangles[ntriang].p[1] = vertlist[triTable[cubeindex][i+1]];
-      triangles[ntriang].p[2] = vertlist[triTable[cubeindex][i+2]];
-      ntriang++;
+   	  TRIANGLE * tri = new TRIANGLE();
+      tri->p[0] = vertlist[triTable[cubeindex][i  ]];
+      tri->p[1] = vertlist[triTable[cubeindex][i+1]];
+      tri->p[2] = vertlist[triTable[cubeindex][i+2]];
+      triangles.push_back(tri);
    }
 
-   return(ntriang);
+   return triangles;
 }
 
 /*
@@ -398,3 +402,6 @@ Vector3D VertexInterp(double isolevel,Vector3D p1, Vector3D p2,double valp1, dou
 
    return(p);
 }
+
+}// namespace CGL
+

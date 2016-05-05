@@ -9,12 +9,14 @@ In this project, we want to support fluid simulation and display the simulated r
 + Huirong Zhu
 
 ## Usage
-+ `-p [xml file]` imports a particle file with initial position, initial velocity, visual radius, and rest density.
-+ Particles are drawn in visualization mode, but not in edit mode,
++ `-p [xml filename]` imports a particle file with initial position, initial velocity, and rest density.
++ `-d [int simulation time]` starts simulation and rendering windowlessly and saves the rendered png files.
++ Particles are drawn in visualization mode with color proportional to the estimated densities,
     + key `m` continues fluid simulation by one default time step.
     + key `c` continues fluid simulation by 1s in time.
-    + key `g` continues fluid simulation by 1s in time, and save each simulated step as png screenshots.
+    + key `g` continues fluid simulation by 1s in time, and saves each simulated step as png files.
     + key `s` writes a png screenshot.
+    + key `h` continues fluid simulation by 1s in time, and renders each simulated step to png files.
 
 ## Background
 ### Challenges

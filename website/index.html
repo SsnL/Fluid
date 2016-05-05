@@ -15,11 +15,109 @@
 </head>
 <body>
 <br />
-<h1 align="middle">Final project: Fluid simulation and rendering</h1>
+<h1 align="middle">Final project: Fluid Simulation and Rendering</h1>
     <h2 align="middle">Chuqian Li, Tongzhou Wang, Huirong Zhu</h2>
     <h2 align="middle">Project Overview</h2>
     <h2 align="middle">Part 1: Fluid Particles Simulation</h2>
+    <h3 align="middle">Algorithm Overview</h2>
+        <p>We follow the algorithm from <a href="http://mmacklin.com/pbf_sig_preprint.pdf">Position Based Fluids</a> in fluid simulation. This is a particle-based approach. Here is an overview of the algorithm. At each time step, <ol>
+            <li>Update each particle's position and velocity according to its current velocity and the forces acting on it. </li>
+            <li>Estimate each particle <code>i</code>'s density <code>rho_i</code> using a smoothing kernel over all its neighbors (SPH estimate). </li>
+            <li>To achieve a rest density <code>rho_0</code>, for each particle <code>i</code>, apply a constraint <code>C_i = rho_i / rho_0 - 1</code>, and solve for position updates along the gradient of <code>C_i</code> using Newton's method. Perform collision detection and response if necessary. </li>
+            <li>Update velocity using the position change in this timestep. </li>
+            <li>Apply vorticity confinement and XSPH viscosity. </li>
+        </ol></p>
+        <p>Notice that each particle is constraint by its constraint as well as its neighbors' constraints. It is not practical to satisfy all the constraints, thus we use <a href="http://ode-wiki.org/wiki/index.php?title=Manual:_Concepts#Constraint_Force_Mixing_.28CFM.29">constraint force mixing (CFM)</a> to softly mix the constraints together. </p>
+        <p>The SPH density estimate becomes unstable near the fluid-air boundary due to lacking enough neighboring particles. An artificial pressure term is added to prevent particles clumping. The vorticity confinement and XSPH viscosity steps are used to account for energy loss and maintain coherent motion. <p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/simulation_alg.png" width="480px" />
+                    <figcaption align="middle">Algorithm Pseudo-code</figcaption>
+                </tr>
+            </table>
+        </div>
+    <h3 align="middle">Collision Detection and Response</h2>
+        <p>Handling collision isn't an easy thing in scenes with objects. Initially, we simply cast a ray from the particle's starting position along its update direction. If an intersection happens, the particle is only moved to the intersection point on the surface of the colliding object. </p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/simulation_collision_want.png" width="480px" />
+                    <figcaption align="middle">Collision</figcaption>
+                    <td align="middle">
+                    <img src="images/simulation_collision_stop.png" width="480px" />
+                    <figcaption align="middle">Stop at intersection</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>However, imagine a particle landing on the surface as shown above. At each timestep, it tries to move down due to gravity, by it will always hit the same surface and get stuck there forever. </p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img style="margin:-100px;" src="results/particles/collision_detection_bug.gif" width="800px" />
+                    <figcaption align="middle">Notice how some particles get stuck on the spheres</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>In real life, if a rain drop hits a surface, it should either bounce off or sliding along the surface, depending the velocity, angle, and surface material. In order to not overly complicate the problem, we simply let the particle slide along the intersecting surface to solve this issue. </p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/simulation_collision_want.png" width="480px" />
+                    <figcaption align="middle">Collision</figcaption>
+                    <td align="middle">
+                    <img src="images/simulation_collision_slide.png" width="480px" />
+                    <figcaption align="middle">Sliding along the surface tangent direction</figcaption>
+                </tr>
+            </table>
+        </div>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="results/particles/collision_detection_fix.gif" width="480px" />
+                    <figcaption align="middle">Now the particles won't get stuck</figcaption>
+                </tr>
+            </table>
+        </div>
+    <h3 align="middle">Parameter Tuning</h2>
+        <p>Parameter tuning was a huge pain. Most of the parameter values suggested in the paper don't work well in our case, probably due to different scene sizes. It is also important how to set the rest density. A low rest density would cause an exploding effect. Yet a high rest density would cause the particles flow really slow (like mercury in real life). </p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="results/particles/particle_simulation_1.gif" width="480px" />
+                    <figcaption align="middle">Low rest density. Explosion at beginning.</figcaption>
+                    <td align="middle">
+                    <img style="margin:-60px;" src="results/particles/particle_simulation_2.gif" width="640px" />
+                    <figcaption align="middle">High rest density. Slow flow.</figcaption>
+                </tr>
+            </table>
+        </div>
     <h2 align="middle">Part 2: Surfacing and rendering</h2>
+    <h2 align="middle">Features</h2>
+        <p>We implemented some nice features to help us debug as well as make the program more user-friendly: <ol>
+            <li>Command line option to specify rest density, initial particle positions and velocities: <code>-p [particle xml]</code>. </li>
+            <li>Display particles with color proportional to estimated density in visualization mode:
+            <div align="center">
+                <table style="width=100%">
+                    <tr>
+                        <td align="middle">
+                        <img style="clip:rect(" src="results/particles/density_initial.png" width="480px" />
+                        <figcaption align="middle">Initial particle.</figcaption>
+                        <td align="middle">
+                        <img src="results/particles/density_one_step.png" width="480px" />
+                        <figcaption align="middle">After one timestep of simulation.</figcaption>
+                    </tr>
+                </table>
+            </div></li>
+            <li>Keyboard controlled simulation, rendering, and screenshot. e.g. <code>'H'</code> simulates for <code>1</code> second and render each timestep to a png file. </li>
+
+        </ol></p>
     <h2 align="middle">Lessons Learned and Future Work</h2>
     <h2 align="middle">Conclusion</h2>
 </body>

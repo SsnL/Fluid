@@ -18,6 +18,28 @@
 <h1 align="middle">Final project: Fluid Simulation and Rendering</h1>
     <h2 align="middle">Chuqian Li, Tongzhou Wang, Huirong Zhu</h2>
     <h2 align="middle">Project Overview</h2>
+      <p>In this project, we aim to support fluid simulation and display the simulated result with rendering algorithms in C++ based on <a href="http://cs184.eecs.berkeley.edu/cs184_sp16/article/10">this assignment</a> as starting code.</p>
+      <p>Here is a GIF of our final rendered result.</p>
+      <div align="center">
+          <table style="width=100%">
+              <tr>
+                  <td align="middle">
+                  <img src="results/diffuse_bsdf_(collision_fix).gif" width="480px" />
+                  <figcaption align="middle">Final Result</figcaption>
+              </tr>
+          </table>
+      </div>
+      <p><b>Usage</b> <ol>
+            <li><code>-p [xml filename]</code> imports a particle file with initial position, initial velocity, and rest density. </li>
+            <li><code>-d [int simulation time]</code> starts simulation and rendering windowlessly and saves the rendered png files. </li>
+            <li>Particles are drawn in visualization mode with color proportional to the estimated densities, <ol>
+              <li>key <code>m</code> continues fluid simulation by one default time step.</li>
+              <li>key <code>c</code> continues fluid simulation by 1s in time.</li>
+              <li>key <code>g</code> continues fluid simulation by 1s in time, and saves each simulated step as png files.</li>
+              <li>key <code>s</code> writes a png screenshot.</li>
+              <li>key <code>h</code> continues fluid simulation by 1s in time, and renders each simulated step to png files.</li>
+            </ol></li>
+        </ol></p>
     <h2 align="middle">Part 1: Fluid Particles Simulation</h2>
     <div align="center">
         <table style="width=100%">
@@ -135,7 +157,21 @@
             </div></li>
         </ol></p>
     <h2 align="middle">Lessons Learned and Future Work</h2>
-    <h2 align="middle">Conclusion</h2>
+      <p>One lesson we learned is that debugging with visualization helps a lot. The following images are two instances where coloring the particles in colors proportional to their density helps us debug the fluid simulation algorithm.</p>
+      <div align="center">
+          <table style="width=100%">
+              <tr>
+                  <td align="middle">
+                  <img style="clip:rect(" src="results/particles/density_initial.png" width="480px" />
+                  <figcaption align="middle">Initial particle.</figcaption>
+                  <td align="middle">
+                  <img src="results/particles/density_one_step.png" width="480px" />
+                  <figcaption align="middle">After one timestep of simulation.</figcaption>
+              </tr>
+          </table>
+      </div>
+      <p>We also learned various surfacing and rendering techniques such as marching cubes and screen space rendering.</p>
+      <p>For future work, one thing we can work on is to smooth the surface that marching cube method generates. We can see that the air bubbles in fluid are not rendered perfectly for now and smoothing the surface can improve on this part. We can also work on parallelizing the rendering work to speed up the rendering time.</p>
 </body>
 </html>
 

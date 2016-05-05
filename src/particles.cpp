@@ -449,6 +449,7 @@ namespace CGL {
         density += poly6_kernel(p->getPosition() - pos);
     }
     return density;
+
   }
 
 }  // namespace CGL

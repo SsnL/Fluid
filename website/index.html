@@ -18,7 +18,9 @@
 <h1 align="middle">Final project: Fluid Simulation and Rendering</h1>
     <h2 align="middle">Chuqian Li, Tongzhou Wang, Huirong Zhu</h2>
     <h2 align="middle">Project Overview</h2>
-      <p>In this project, we aim to support fluid simulation and display the simulated result with rendering algorithms in C++ based on <a href="http://cs184.eecs.berkeley.edu/cs184_sp16/article/10">this assignment</a> as starting code.</p>
+      <p>In this project, we aim to support fluid simulation and display the simulated result with rendering algorithms. Fluid simulation is widely used by artists and producers in providing amazing visual effects. It's also used in engineering area in studying fluid dynamics. However, fluid movement follows complicated physical models and thus requires a huge number of computations to simulate. Futhermore, fluid rendering takes relatively long time. Thus, efficient simulation and rendering of fluid are interesting topics and become our final project ideas.</p>
+      <p>We implement this project in C++ based on <a href="http://cs184.eecs.berkeley.edu/cs184_sp16/article/10">this assignment</a> as starting code. The start code implements a keyboard controlled ray tracing UI with both visualization mode and rendering function. Thus, we can simply add fluid simulation and rendering to the starting code to test its functionality in different background settings.</p>
+      <p>We also proposed to implement subsurface scattering to fluid in the beginning. However, unless water is super dirty, water simply refracts light. Thus, subsurface scattering becomes unnecessary, so we removed it from our final project proposal.</p>
       <p>Here is a GIF of our final rendered result.</p>
       <div align="center">
           <table style="width=100%">
@@ -141,21 +143,8 @@
 
         </ol></p>
     <h2 align="middle">Lessons Learned and Future Work</h2>
-      <p>One lesson we learned is that debugging with visualization helps a lot. The following images are two instances where coloring the particles in colors proportional to their density helps us debug the fluid simulation algorithm.</p>
-      <div align="center">
-          <table style="width=100%">
-              <tr>
-                  <td align="middle">
-                  <img style="clip:rect(" src="results/particles/density_initial.png" width="480px" />
-                  <figcaption align="middle">Initial particle.</figcaption>
-                  <td align="middle">
-                  <img src="results/particles/density_one_step.png" width="480px" />
-                  <figcaption align="middle">After one timestep of simulation.</figcaption>
-              </tr>
-          </table>
-      </div>
-      <p>We also learned various surfacing and rendering techniques such as marching cubes and screen space rendering.</p>
-      <p>For future work, one thing we can work on is to smooth the surface that marching cube method generates. We can see that the air bubbles in fluid are not rendered perfectly for now and smoothing the surface can improve on this part. We can also work on parallelizing the rendering work to speed up the rendering time.</p>
+      <p>One lesson we learned is that debugging with visualization helps a lot. For example, coloring the particles in colors proportional to their density helps us debug the fluid simulation algorithm. We also learned various surfacing and rendering techniques such as marching cubes and screen space rendering.</p>
+      <p>For future work, one thing we can work on is to use advanced surfacing techniques to smooth the surface that marching cube method generates. We can see that the air bubbles in fluid are not rendered perfectly for now and smoothing the surface can improve on this part. We can also apply parallelized computing or GPU techniques to speed up the rendering work. Moreover, we can also work on interactive fluid simulation such as moving the fluid particles to a certain position by interactive control. Finally, to render dusty water nicely, we may also work on volumetric rendering.</p>
 </body>
 </html>
 

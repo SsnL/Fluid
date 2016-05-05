@@ -302,7 +302,7 @@ Vector3D Application::stov(string s) {
 void Application::load_particles(const char* filename) {
     std::ifstream ifs (filename, std::ifstream::in);
   if (!ifs.is_open()) {
-    cout << "[Warning] Particle file not passes in or not found\n";
+    cout << "[Warning] Particle file not passed in or not found\n";
     cout << "[Warning] use -p <particle_file_path>\n";
     pathtracer->fluid_particles = new Particles();
     return;

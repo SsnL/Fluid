@@ -112,7 +112,7 @@ struct Particles {
   bool surfaceUpToTimestep = false;
 
   Particles(double rest_density = 1000.0) : bvh(NULL), rest_density(rest_density), simulate_time(0.0) {
-    fprintf(stdout, "[Fluid Simulation] %s", paramsString().c_str()); fflush(stdout);
+    fprintf(stdout, "%s", paramsString().c_str()); fflush(stdout);
   };
 
   void addParticle(Vector3D pos, Vector3D v) {

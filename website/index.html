@@ -43,7 +43,15 @@
             </ol></li>
         </ol></p>
     <h2 align="middle">Part 1: Fluid Particles Simulation</h2>
-    <h3 align="middle">Algorithm Overview</h2>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                <img src="results/particles/collision_detection_fix.gif" width="480px" />
+            </tr>
+        </table>
+    </div>
+    <h3 align="left">Algorithm Overview</h2>
         <p>We follow the algorithm from <a href="http://mmacklin.com/pbf_sig_preprint.pdf">Position Based Fluids</a> in fluid simulation. This is a particle-based approach. Here is an overview of the algorithm. At each time step, <ol>
             <li>Update each particle's position and velocity according to its current velocity and the forces acting on it. </li>
             <li>Estimate each particle <code>i</code>'s density <code>rho_i</code> using a smoothing kernel over all its neighbors (SPH estimate). </li>
@@ -62,7 +70,7 @@
                 </tr>
             </table>
         </div>
-    <h3 align="middle">Collision Detection and Response</h2>
+    <h3 align="left">Collision Detection and Response</h2>
         <p>Handling collision isn't an easy thing in scenes with objects. Initially, we simply cast a ray from the particle's starting position along its update direction. If an intersection happens, the particle is only moved to the intersection point on the surface of the colliding object. </p>
         <div align="center">
             <table style="width=100%">
@@ -108,7 +116,7 @@
                 </tr>
             </table>
         </div>
-    <h3 align="middle">Parameter Tuning</h2>
+    <h3 align="left">Parameter Tuning</h2>
         <p>Parameter tuning was a huge pain. Most of the parameter values suggested in the paper don't work well in our case, probably due to different scene sizes. It is also important how to set the rest density. A low rest density would cause an exploding effect. Yet a high rest density would cause the particles flow really slow (like mercury in real life). </p>
         <div align="center">
             <table style="width=100%">
@@ -125,13 +133,14 @@
     <h2 align="middle">Part 2: Surfacing and rendering</h2>
     <h2 align="middle">Features</h2>
         <p>We implemented some nice features to help us debug as well as make the program more user-friendly: <ol>
-            <li>Command line option to specify rest density, initial particle positions and velocities: <code>-p [particle xml]</code>. </li>
+            <li>Command line option <code>-p [xml filename]</code> imports a particle file with initial position, initial velocity, and rest density. </li>
+            <li>Command line option <code>-d [int simulation time]</code> starts simulation and rendering windowlessly and saves the rendered png files. </li>
             <li>Display particles with color proportional to estimated density in visualization mode:
             <div align="center">
                 <table style="width=100%">
                     <tr>
                         <td align="middle">
-                        <img style="clip:rect(" src="results/particles/density_initial.png" width="480px" />
+                        <img src="results/particles/density_initial.png" width="480px" />
                         <figcaption align="middle">Initial particle.</figcaption>
                         <td align="middle">
                         <img src="results/particles/density_one_step.png" width="480px" />
@@ -139,8 +148,15 @@
                     </tr>
                 </table>
             </div></li>
-            <li>Keyboard controlled simulation, rendering, and screenshot. e.g. <code>'H'</code> simulates for <code>1</code> second and render each timestep to a png file. </li>
-
+            <li>Keyboard controlled simulation, rendering, and screenshot making in visualization mode.
+            <div align="left">
+                <table style="width=100%">
+                    <tr>
+                        <td align="left">
+                        <img src="images/key_usage.png" width="480px" />
+                    </tr>
+                </table>
+            </div></li>
         </ol></p>
     <h2 align="middle">Lessons Learned and Future Work</h2>
       <p>One lesson we learned is that debugging with visualization helps a lot. For example, coloring the particles in colors proportional to their density helps us debug the fluid simulation algorithm. We also learned various surfacing and rendering techniques such as marching cubes and screen space rendering.</p>

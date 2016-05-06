@@ -124,8 +124,8 @@
             </table>
         </div>
     <h2 align="middle">Part 2: Surfacing and rendering</h2>
-        To get a more realistic rendering of the fluid, we want to convert the particles into triangle meshes. We investigated several algorithms for surfacing including computing the convex hull and screen space fluid rendering described in 
-        <a href="http://developer.download.nvidia.com/presentations/2010/gdc/Direct3D_Effects.pdf">this paper</a>. We finally choose Marching Cube describe in 
+        To get a more realistic rendering of the fluid, we want to convert the particles into triangle meshes. We investigated several algorithms for surfacing including computing the convex hull and screen space fluid rendering described in
+        <a href="http://developer.download.nvidia.com/presentations/2010/gdc/Direct3D_Effects.pdf">this paper</a>. We finally choose Marching Cube describe in
         <a href="http://paulbourke.net/geometry/polygonise/">this article</a> because works the best with our existing implementation of pathtracer and fluid simulator.
         <h3 align="left">Surfacing: Marching Cube</h3>
         Marching Cube is an algorithm for creating a polygonal representation an isosurface on a 3D scalar field. The 3D scalar field is defined as a function and denotes how far the point is from the particles. As shown below, the algorithm will give us a polygonal surface of the fluid particles.
@@ -148,9 +148,9 @@
               </tr>
           </table>
         </div>
-        
+
         <h3 align="left">Isofield function</h3>
-        Now the problem is how do we define the isofield function so that the closer we're to the particles, the higher value we get. At first, we thought of using the distance to the closest fluid particle as the isofield function. However, this involves implementing the nearest neighbor search. 
+        Now the problem is how do we define the isofield function so that the closer we're to the particles, the higher value we get. At first, we thought of using the distance to the closest fluid particle as the isofield function. However, this involves implementing the nearest neighbor search.
         <br>
         Then we find out that the densities defined during fluid simulation is conveniently available as isofields. Another plus is that paramter tuning becomes easier. We use the rest density as the threshod isolevel and half of kernel radius as the maximum cube size.
 
@@ -219,11 +219,11 @@ Rendering for Games". (<a href="http://developer.download.nvidia.com/presentatio
     </ul>
     <h2 align="middle">Contributions</h2>
     <ul>
-    <li>Tongzhou Wang:
+    <li>Tongzhou Wang: Implement and tune fluid particle simulation, add key controls for simulation and rendering.
     <li>Huirong Zhu:
-    <li>Chuqian Li: Implement loading particles as xml and surfacing
+    <li>Chuqian Li: Implement loading particles as xml and surfacing.
     </ul>
-    
+
 </body>
 </html>
 

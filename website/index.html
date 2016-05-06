@@ -165,7 +165,10 @@
         Now the problem is how do we define the isofield function so that the closer we're to the particles, the higher value we get. At first, we thought of using the distance to the closest fluid particle as the isofield function. However, this involves implementing the nearest neighbor search.
         <br>
         Then we find out that the densities defined during fluid simulation is conveniently available as isofields. Another plus is that paramter tuning becomes easier. We use the rest density as the threshod isolevel and half of kernel radius as the maximum cube size.
-
+        <p align="middle">
+            <pre align="middle">
+            isoF(pos) = sum(poly6_kernel(p->getPosition() - pos)) for all p in particles
+        </pre></p>
 
         <h3 align="left">Rendering with different materials</h3>
             <div align="center">
